@@ -18,6 +18,6 @@ public class MoreConfusing {
 	}
 
 	public static void main(String args[]) {
-		new MoreConfusing(null);
+		new MoreConfusing(null);  // Prints "ArrayList"
 	}
 }

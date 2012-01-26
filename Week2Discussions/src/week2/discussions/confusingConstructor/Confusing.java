@@ -9,14 +9,6 @@ import java.util.*;
 		(c) None of the above 
  */
 
-/* 
- * This prints "double array" since there is a relationship between 
- * double[] and Object and the compiler will choose the most specific 
- * type possible.  The relationship between double[] and Object is 
- * implicit.  All classes implicitly derive from Object.  Had another 
- * overload been defined with another child class of object, it would 
- * not compile since it would be ambiguous.
- */
 public class Confusing {
 	
 	public Confusing(Object o) {
@@ -31,6 +23,6 @@ public class Confusing {
 		System.out.println("string");
 	}
 	public static void main(String args[]) {
-		new Confusing(null);
+		//new Confusing(null);  // The constructor Confusing(Object) is ambiguous
 	}
 }
