@@ -12,11 +12,13 @@ import java.math.BigDecimal;
 
 public class Change {
 	public static void main(String args[]) {
+		
 		BigDecimal a = new BigDecimal("2.00");
 		BigDecimal b = new BigDecimal("1.10");
-		double r = a.subtract(b).doubleValue();
-		System.out.println(r);
-		System.out.println(2.00 - 1.10); // -> 0.8999999999999999
-		System.out.println(2.00f - 1.10f); // -> 0.9
+		System.out.println(a.subtract(b));  // -> 0.90
+		
+		
+		System.out.println(2.00f - 1.10f);  // -> 0.9
+		System.out.println(2.00f - 1.18f);  // -> 0.82000005
 	}
 }
