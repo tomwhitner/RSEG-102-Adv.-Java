@@ -21,14 +21,23 @@ class Horse {
  */
 
 class Horse {
-	Horse() {
+	public Horse() {
 		functionalityThatIsCommonToConstructorAndDoStuff();
 	} // constructor
+	
+	public void Horse() {
+		System.out.println("horse was called.");
+	}
 
 	void doStuff() {
 		functionalityThatIsCommonToConstructorAndDoStuff();
 	}
 	
 	void functionalityThatIsCommonToConstructorAndDoStuff() {
+	}
+	
+	public static void main(String[] args) {
+		Horse h = new Horse();
+		h.Horse();
 	}
 }
