@@ -7,7 +7,6 @@ package week2.interfaces;
 public abstract class Animal {
 	
 	private String name;
-	
 	private String type;
 	
 	public Animal(String type, String name) {
