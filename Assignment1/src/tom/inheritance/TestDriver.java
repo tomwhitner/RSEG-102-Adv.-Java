@@ -12,13 +12,13 @@ public class TestDriver {
 		Employee[] employees = new Employee[6];
 		
 		cal.set(2001, GregorianCalendar.JANUARY, 1);
-		employees[0] = new PermanentEmployee("Peter", cal.getTime(), new BigDecimal(100000), new BigDecimal(40));
+		employees[0] = new PermanentEmployee("Peter ", cal.getTime(), new BigDecimal(100000), new BigDecimal(40));
 		
 		cal.set(2002, GregorianCalendar.FEBRUARY, 2);
-		employees[1] = new PermanentEmployee("Pam", cal.getTime(), new BigDecimal(125000));
+		employees[1] = new PermanentEmployee("Pam ", cal.getTime(), new BigDecimal(125000));
 		/*
 		cal.set(2003, GregorianCalendar.MARCH, 3);
-		employees[2] = new TemporaryEmployee("Tammy", cal.getTime(), new BigDecimal(8.25));
+		employees[2] = new TemporaryEmployee("Tammy ", cal.getTime(), new BigDecimal(8.25));
 		
 		cal.set(2004, GregorianCalendar.APRIL, 4);
 		employees[3] = new TemporaryEmployee("Tim", cal.getTime(), new BigDecimal(12.50), new BigDecimal(43));

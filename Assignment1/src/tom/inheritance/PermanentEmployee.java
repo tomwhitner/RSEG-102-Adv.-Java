@@ -2,6 +2,8 @@ package tom.inheritance;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Date;
 
 public class PermanentEmployee extends Employee {
@@ -42,14 +44,15 @@ public class PermanentEmployee extends Employee {
 		setVacationBalance(vacationBalance);
 		
 		StringBuilder s = new StringBuilder();
-		s.append("Salary: " + earnings + "\n");
-		s.append("Vacation (hours): " + vacationBalance);
+		s.append("Annual Salary: ").append(CURRENCY_FORMAT.format(getWage())).append(RETURN);
+		s.append("Pay: ").append(CURRENCY_FORMAT.format(earnings)).append(RETURN);
+		s.append("Vacation (hours): ").append(vacationBalance).append(RETURN);
 		
 		printPaycheck(s.toString());
 	}
 	
-	private static BigDecimal BIWEEKLY_VACATION_ACCRUAL = new BigDecimal("5");
-	private static BigDecimal NUMBER_OF_PAY_PERIODS = new BigDecimal("26");
+	private static final BigDecimal BIWEEKLY_VACATION_ACCRUAL = new BigDecimal("5");
+	private static final BigDecimal NUMBER_OF_PAY_PERIODS = new BigDecimal("26");
 
 	/**
 	 * 
