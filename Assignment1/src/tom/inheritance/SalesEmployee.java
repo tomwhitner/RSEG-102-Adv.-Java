@@ -57,6 +57,9 @@ public class SalesEmployee extends PermanentEmployee {
 		return commission;
 	}
 	
+	/**
+	 * Calculates earnings (base and commission) and prints paycheck
+	 */
 	@Override
 	public void generatePayCheck() {
 		

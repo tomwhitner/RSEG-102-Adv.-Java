@@ -113,12 +113,11 @@ public abstract class Employee {
 	 * @return the next paycheck Id
 	 */
 	private static int getNextPayCheckId() {
-		return payCheckId++;
+		return nextPayCheckId++;
 	}
 
 	private Date hireDate;
 	private String name;
 	private BigDecimal wage;
-	private static int payCheckId = 1;
-	
+	private static int nextPayCheckId = 1;
 }
