@@ -24,10 +24,10 @@ public class TestDriver {
 		employees[3] = new TemporaryEmployee("Tim", cal.getTime(), new BigDecimal(10.00), new BigDecimal(43));
 		
 		cal.set(2005, GregorianCalendar.MAY, 5);
-		employees[4] = new SalesEmployee("Seth", cal.getTime(), new BigDecimal(25000), new BigDecimal(10));
+		employees[4] = new SalesEmployee("Seth", cal.getTime(), new BigDecimal(25000), new BigDecimal(0.10));
 		
 		cal.set(2006, GregorianCalendar.JUNE, 6);
-		employees[5] = new SalesEmployee("Sarah", cal.getTime(), new BigDecimal(32000), new BigDecimal(12), new BigDecimal(50000));
+		employees[5] = new SalesEmployee("Sarah", cal.getTime(), new BigDecimal(32000), new BigDecimal(0.12), new BigDecimal(50000));
 		
 		for (Employee e : employees) {
 			e.generatePayCheck();

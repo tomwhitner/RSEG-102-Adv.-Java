@@ -79,7 +79,7 @@ public abstract class Employee {
 		payCheck.append("Pay date: ").append(DATE_FORMAT.format(new Date())).append(RETURN);
 		payCheck.append("PayCheck #: ").append(getNextPayCheckId()).append(RETURN);
 		
-		payCheck.append(" - - - ").append(RETURN);
+		payCheck.append(RETURN);
 		
 		payCheck.append(details);
 		payCheck.append("- - - -").append(RETURN);
@@ -88,8 +88,25 @@ public abstract class Employee {
 	}
 
 	// constants used to format paycheck output; may be used by subclasses
+	
+	/**
+	 * Symbol for printing line separator (carriage return)
+	 */
 	protected static final String RETURN = System.getProperty("line.separator");
+
+	/**
+	 * Format for printing currency values
+	 */
 	protected static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance();
+
+	/**
+	 * Format for printing percent values
+	 */
+	protected static final NumberFormat PERCENT_FORMAT = NumberFormat.getPercentInstance();
+
+	/**
+	 * Format for printing date values
+	 */
 	protected static final DateFormat DATE_FORMAT = DateFormat.getDateInstance();
 
 	/**

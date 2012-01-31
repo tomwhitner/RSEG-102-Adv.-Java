@@ -25,7 +25,7 @@ public class PermanentEmployee extends Employee {
 	/**
 	 * @param vacationBalance the vacationBalance to set
 	 */
-	private void setVacationBalance(BigDecimal vacationBalance) {
+	protected void setVacationBalance(BigDecimal vacationBalance) {
 		this.vacationBalance = vacationBalance;
 	}
 	
@@ -49,9 +49,6 @@ public class PermanentEmployee extends Employee {
 		printPaycheck(s.toString());
 	}
 	
-	private static final BigDecimal BIWEEKLY_VACATION_ACCRUAL = new BigDecimal("5");
-	private static final BigDecimal NUMBER_OF_PAY_PERIODS = new BigDecimal("26");
-
 	/**
 	 * 
 	 * @param hoursTaken The number of vacation hours used.
@@ -65,6 +62,17 @@ public class PermanentEmployee extends Employee {
 		}
 		
 	}
+	
+	/**
+	 * The amount of vacation accrued during a pay period
+	 */
+	protected static final BigDecimal BIWEEKLY_VACATION_ACCRUAL = new BigDecimal("5");
+	
+	/**
+	 * The number of pay periods per year
+	 */
+	protected static final BigDecimal NUMBER_OF_PAY_PERIODS = new BigDecimal("26");
+
 
 	private BigDecimal vacationBalance;
 
