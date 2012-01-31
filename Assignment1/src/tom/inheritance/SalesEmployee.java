@@ -5,7 +5,7 @@ import java.math.RoundingMode;
 import java.util.Date;
 
 /**
- * 
+ * SalesEmployee represents a permanent sales employee who is compensated based on commission.
  * @author tom
  *
  */
