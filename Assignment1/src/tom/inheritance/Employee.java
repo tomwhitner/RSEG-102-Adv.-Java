@@ -5,12 +5,28 @@ import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.util.Date;
 
+/**
+ * Employee is an abstract class that provides general capabilities for concrete subclasses.
+ * @author tom
+ *
+ */
 public abstract class Employee {
 	
+	/**
+	 * 
+	 * @param name The employee's full name
+	 * @param hireDate The employee's date of hire
+	 */
 	public Employee(String name, Date hireDate) {
 		this(name, hireDate, BigDecimal.ZERO);
 	}
 	
+	/**
+	 * 
+	 * @param name The employee's full name
+	 * @param hireDate The employee's date of hire
+	 * @param wage The employee's wage, specific usage is dictated by each subclass
+	 */
 	public Employee(String name, Date hireDate, BigDecimal wage) {
 		this.name = name;
 		this.hireDate = hireDate;
@@ -18,43 +34,42 @@ public abstract class Employee {
 	}
 
 	/**
-	 * @return the hireDate
+	 * @return the employee's date of hire
 	 */
 	public Date getHireDate() {
 		return hireDate;
 	}
 
 	/**
-	 * @return the name
+	 * @return the employee's full name
 	 */
 	public String getName() {
 		return name;
 	}
 
 	/**
-	 * @return the wage
+	 * @return the employee's wage
 	 */
 	public BigDecimal getWage() {
 		return wage;
 	}
 
 	/**
-	 * @param wage the wage to set
+	 * @param wage the employee's wage to set
 	 */
 	public void setWage(BigDecimal wage) {
 		this.wage = wage;
 	}
 	
 	/**
-	 * Paychecks are generated once every two weeks (26 pay periods every year).
+	 * Performs earnings and vacation calculations and prints paycheck.
 	 */
 	public abstract void generatePayCheck();
 	
-	protected static final String RETURN = "\n";
-	private static int payCheckId = 1;
-	protected static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance();
-	protected static final DateFormat DATE_FORMAT = DateFormat.getDateInstance();
-	
+	/**
+	 * Formats and prints paycheck
+	 * @param details The details provided by subclass
+	 */
 	protected void printPaycheck(String details) {
 		StringBuilder payCheck = new StringBuilder();
 		payCheck.append("- - - -").append(RETURN);
@@ -72,17 +87,21 @@ public abstract class Employee {
 		System.out.println(payCheck);
 	}
 
+	// constants used to format paycheck output; may be used by subclasses
+	protected static final String RETURN = System.getProperty("line.separator");
+	protected static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance();
+	protected static final DateFormat DATE_FORMAT = DateFormat.getDateInstance();
+
 	/**
-	 * @return the payCheckId
+	 * @return the next paycheck Id
 	 */
 	private static int getNextPayCheckId() {
 		return payCheckId++;
 	}
 
-
-
 	private Date hireDate;
 	private String name;
 	private BigDecimal wage;
+	private static int payCheckId = 1;
 	
 }
