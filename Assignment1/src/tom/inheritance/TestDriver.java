@@ -1,6 +1,7 @@
 package tom.inheritance;
 
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.GregorianCalendar;
 
 /**
@@ -39,16 +40,16 @@ public class TestDriver {
 		employees[3] = tim;
 		
 		cal.set(2005, GregorianCalendar.MAY, 5);
-		SalesEmployee seth = new SalesEmployee("Seth Sullivan", cal.getTime(), new BigDecimal(25000), new BigDecimal(0.10));
-		seth.setSales(new BigDecimal(10000));
+		SalesEmployee seth = new SalesEmployee("Seth Sullivan", cal.getTime(), new BigDecimal(25000), new BigDecimal(0.10), new BigDecimal(10000));
 		employees[4] = seth;
 				 
 		cal.set(2006, GregorianCalendar.JUNE, 6);
-		SalesEmployee sarah = new SalesEmployee("Sarah Stamp", cal.getTime(), new BigDecimal(32000), new BigDecimal(0.12), new BigDecimal(50000));
+		SalesEmployee sarah = new SalesEmployee("Sarah Stamp", cal.getTime(), new BigDecimal(32000), new BigDecimal(0.12), new BigDecimal(50000), new BigDecimal(6));
 		employees[5] = sarah;
 				 
+		NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance();
 		for (Employee e : employees) {
-			e.generatePayCheck();
+			System.out.println(e.getName() + ": " + CURRENCY_FORMAT.format(e.generatePayCheck()) + " (" + e.getClass().getSimpleName() + ")");
 		}
 	}
 }

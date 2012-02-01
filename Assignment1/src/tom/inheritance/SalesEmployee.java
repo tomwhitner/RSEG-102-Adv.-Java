@@ -1,7 +1,6 @@
 package tom.inheritance;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Date;
 
 /**
@@ -18,8 +17,8 @@ public class SalesEmployee extends PermanentEmployee {
 	 * @param wage The sales employee's base salary
 	 * @param commission The sales employee's commission percentage
 	 */
-	public SalesEmployee(String name, Date hireDate, BigDecimal wage, BigDecimal commission) {
-		this(name, hireDate, wage, commission, BigDecimal.ZERO);
+	public SalesEmployee(String name, Date hireDate, BigDecimal wage, BigDecimal commission, BigDecimal sales) {
+		this(name, hireDate, wage, commission, sales, BigDecimal.ZERO);
 	}
 
 	/**
@@ -30,8 +29,8 @@ public class SalesEmployee extends PermanentEmployee {
 	 * @param commission The sales employee's commission percentage
 	 * @param sales The sales employee's sales for this pay period
 	 */
-	public SalesEmployee(String name, Date hireDate, BigDecimal wage, BigDecimal commission, BigDecimal sales) {
-		super(name, hireDate, wage);
+	public SalesEmployee(String name, Date hireDate, BigDecimal wage, BigDecimal commission, BigDecimal sales, BigDecimal vacation) {
+		super(name, hireDate, wage, vacation);
 		this.commission = commission;
 		this.sales = sales;
 	}
@@ -44,45 +43,37 @@ public class SalesEmployee extends PermanentEmployee {
 	}
 
 	/**
-	 * @param sales sales employee's sales for this pay period to set
-	 */
-	public void setSales(BigDecimal sales) {
-		this.sales = sales;
-	}
-
-	/**
 	 * @return the sales employee's commission percentage
 	 */
 	public BigDecimal getCommission() {
 		return commission;
 	}
 	
+	
 	/**
-	 * Calculates earnings (base and commission) and prints paycheck
+	 * Performs earnings and vacation calculations and prints paycheck.
+	 * @return the employee's pay for the period
 	 */
 	@Override
-	public void generatePayCheck() {
+	public BigDecimal generatePayCheck() {
+		BigDecimal salary = super.generatePayCheck(); // handles vacation
 		
-		BigDecimal sales = getSales();
-		BigDecimal commission = getCommission();
+		BigDecimal commissionPay = calculateCommmission();
 		
-		BigDecimal salary = getWage().divide(NUMBER_OF_PAY_PERIODS, RoundingMode.HALF_UP);
-		BigDecimal commissionPay = sales.multiply(commission);
 		BigDecimal earnings = salary.add(commissionPay);
 		
-		// Every pay period, employee accrues 5 hours of vacation
-		BigDecimal vacationBalance = getVacationBalance().add(BIWEEKLY_VACATION_ACCRUAL);
-		setVacationBalance(vacationBalance);
-		
-		StringBuilder s = new StringBuilder();
-		s.append("Annual Salary: ").append(CURRENCY_FORMAT.format(getWage())).append(RETURN);
-		s.append("Commission %: ").append(PERCENT_FORMAT.format(commission)).append(RETURN);
-		s.append("Sales this period: ").append(CURRENCY_FORMAT.format(sales)).append(RETURN);
-		s.append("Pay: ").append(CURRENCY_FORMAT.format(earnings)).append(RETURN);
-		s.append("Vacation (hours): ").append(vacationBalance).append(RETURN);
-		
-		printPaycheck(s.toString());
+		return earnings;
+	}
 
+	/**
+	 * Calculates the employee's commission for this pay period
+	 * @return the employee's commission for this pay period
+	 */
+	public BigDecimal calculateCommmission() {
+		BigDecimal sales = getSales();
+		BigDecimal commission = getCommission();
+		BigDecimal commissionPay = sales.multiply(commission);
+		return commissionPay;		
 	}
 
 	private BigDecimal sales;
