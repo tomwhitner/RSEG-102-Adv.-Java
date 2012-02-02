@@ -51,19 +51,18 @@ public abstract class Employee {
 	public BigDecimal getWage() {
 		return wage;
 	}
+	
+	/**
+	 * The number of pay periods per year
+	 */
+	protected static final BigDecimal NUMBER_OF_PAY_PERIODS = new BigDecimal(
+			"26");
 
 	/**
 	 * Performs earnings and vacation calculations and prints paycheck.
 	 * @return the employee's pay for the period
 	 */
 	public abstract BigDecimal generatePayCheck();
-
-	// constants used to format paycheck output; may be used by subclasses
-	
-	/**
-	 * Symbol for printing line separator (carriage return)
-	 */
-	protected static final String RETURN = System.getProperty("line.separator");
 
 	private Date hireDate;
 	private String name;

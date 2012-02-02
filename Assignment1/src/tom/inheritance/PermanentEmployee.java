@@ -102,12 +102,6 @@ public class PermanentEmployee extends Employee {
 	protected static final BigDecimal BIWEEKLY_VACATION_ACCRUAL = new BigDecimal(
 			"5");
 
-	/**
-	 * The number of pay periods per year
-	 */
-	protected static final BigDecimal NUMBER_OF_PAY_PERIODS = new BigDecimal(
-			"26");
-
 	private BigDecimal vacationBalance;
 
 }
