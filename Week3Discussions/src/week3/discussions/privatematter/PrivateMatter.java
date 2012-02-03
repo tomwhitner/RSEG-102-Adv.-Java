@@ -1,4 +1,4 @@
-package week3.discussion.privatematter;
+package week3.discussions.privatematter;
 
 class Base {
 	public String name = "Base";
