@@ -50,7 +50,7 @@ public class TestDriver {
 	 * @param wage The wage to be verified
 	 * @throws IllegalWageException Thrown if wage is negative or zero
 	 * @throws MinWageException Thrown if the wage is too low (currently < $6)
-	 * @throws MaxWageException Thrown if the wage is to high (currently > $200)
+	 * @throws MaxWageException Thrown if the wage is too high (currently > $200)
 	 */
 	public static void verifyEmployeeWage(BigDecimal wage)
 			throws IllegalWageException, MinWageException, MaxWageException {
