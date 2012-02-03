@@ -4,13 +4,13 @@ import java.math.BigDecimal;
 
 public class WageLimitException extends WageException {
 
-	public WageLimitException (BigDecimal wage, BigDecimal wageLimit) {
-		super(wage);
+	public WageLimitException (BigDecimal wage, String message, BigDecimal wageLimit) {
+		super(wage, message);
 		this.wageLimit = wageLimit;
 	}
 	
 	public BigDecimal getWageDiff() {
-		return  getWage().subtract(wageLimit);  // double check sign of this operation.
+		return  getWage().subtract(wageLimit);  
 	}
 	
 	public BigDecimal getWageLimit() {

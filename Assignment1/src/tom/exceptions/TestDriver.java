@@ -19,8 +19,7 @@ public class TestDriver {
 		testWages[3] = new BigDecimal("6");
 		testWages[4] = new BigDecimal("100");
 		testWages[5] = new BigDecimal("199");
-		testWages[6] = new BigDecimal("200"); // added to test upper limit
-												// condition
+		testWages[6] = new BigDecimal("200"); // added to test upper limit condition
 		testWages[7] = new BigDecimal("250");
 
 		for (BigDecimal wage : testWages) {
@@ -30,36 +29,29 @@ public class TestDriver {
 				verifyEmployeeWage(wage);
 				System.out.println(" Wage is valid.");
 			} catch (IllegalWageException e) {
-				System.out.println(" Wage "
-						+ CURRENCY_FORMAT.format(e.getWage())
-						+ " is illegal.  Cannot be negative or zero.");
-			} catch (MinWageException e) {
-				System.out
-						.println(" Wage "
-								+ CURRENCY_FORMAT.format(e.getWage())
-								+ " is out of range.  Must be greater than or equal to "
-								+ CURRENCY_FORMAT.format(e.getWageLimit())
-								+ ".  Difference = "
-								+ CURRENCY_FORMAT.format(e.getWageDiff()) + ".");
-			} catch (MaxWageException e) {
-				System.out.println(" Wage "
-						+ CURRENCY_FORMAT.format(e.getWage())
-						+ " is out of range.  Must be less than or equal to "
-						+ CURRENCY_FORMAT.format(e.getWageLimit())
-						+ ".  Difference = "
-						+ CURRENCY_FORMAT.format(e.getWageDiff()) + ".");
+				System.out.println(e.getMessage());
+			} catch (WageLimitException e) {
+				System.out.println(e.getMessage());
+				System.out.println("Difference = " + CURRENCY_FORMAT.format(e.getWageDiff()) + ".");
 			} finally {
-				System.out.println(" Wage validation complete.");
+				System.out.println("Wage validation complete.");
 				System.out.println("");
 			}
 		}
 	}
 
-	private static final NumberFormat CURRENCY_FORMAT = NumberFormat
-			.getCurrencyInstance();
+	private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance();
+			
 	private static final BigDecimal LOWER_WAGE_LIMIT = new BigDecimal("6.00");
 	private static final BigDecimal UPPER_WAGE_LIMIT = new BigDecimal("200.00");
 
+	/**
+	 * Verifies that an Temporary Employee's wages are within the proper limits
+	 * @param wage The wage to be verified
+	 * @throws IllegalWageException Thrown if wage is negative or zero
+	 * @throws MinWageException Thrown if the wage is too low (currently < $6)
+	 * @throws MaxWageException Thrown if the wage is to high (currently > $200)
+	 */
 	public static void verifyEmployeeWage(BigDecimal wage)
 			throws IllegalWageException, MinWageException, MaxWageException {
 
