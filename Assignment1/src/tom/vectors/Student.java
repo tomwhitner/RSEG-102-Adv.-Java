@@ -1,4 +1,4 @@
-package tom.vecotrs;
+package tom.vectors;
 
 public class Student {
 
