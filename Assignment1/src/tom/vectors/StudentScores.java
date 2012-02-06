@@ -35,7 +35,6 @@ public class StudentScores {
 			}
 		}		
 		
-		
 		// Also, write code to show removal of one Student object and inserting a new Student object at that position.
 		int loc = 3;
 		Student charlie = students.remove(loc);
