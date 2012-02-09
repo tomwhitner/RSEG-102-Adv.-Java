@@ -27,19 +27,26 @@ public class StudentScores {
 		System.out.println("Last = " + students.lastElement());
 
 		// Write code to verify (using name) if vector consists of one Student object. (Search for one student in the vector using name). 
-		// ??
+		
+		// Approach 1 - use iteration
 		String searchFrom = "Charlie";
 		for (Student s : students) {
 			if (s.getName() == searchFrom) {
-				System.out.println("Found " + searchFrom);
+				System.out.println("Found " + searchFrom + " [approach #1]");
 			}
 		}		
 		
+		// Approach 2 - use object.equals();
+		Student charlieSearch = new Student("Charlie", 0);
+		int charlierIndex = students.indexOf(charlieSearch);
+		assert charlierIndex != -1 : "Charlie not found in collection";
+		Student charlie = students.get(charlierIndex);
+		System.out.println("Found " + charlie.getName() + " [approach #2]");
+				
 		// Also, write code to show removal of one Student object and inserting a new Student object at that position.
-		int loc = 3;
-		Student charlie = students.remove(loc);
+		students.remove(charlierIndex);
 		Student chelsea = new Student("Chelsea", 100.0);
-		students.insertElementAt(chelsea, loc);
+		students.insertElementAt(chelsea, charlierIndex);
 		
 		// Enumerate all elements in the Vector.
 		for (Student s : students) {
