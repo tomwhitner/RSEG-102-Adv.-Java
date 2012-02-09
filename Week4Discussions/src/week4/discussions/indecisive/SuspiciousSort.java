@@ -1,4 +1,4 @@
-package wwek3.discussions.indecisive;
+package week4.discussions.indecisive;
 
 import java.util.Arrays;
 import java.util.Comparator;
