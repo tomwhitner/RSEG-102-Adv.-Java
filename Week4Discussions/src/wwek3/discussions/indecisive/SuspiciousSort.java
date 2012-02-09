@@ -42,7 +42,6 @@ public class SuspiciousSort {
 	
 	private static Integer[] sortThree(Integer[] arr) {
 		Arrays.sort(arr, new Comparator<Integer>() {
-
 			@Override
 			public int compare(Integer i1, Integer i2) {
 				// TODO Auto-generated method stub
