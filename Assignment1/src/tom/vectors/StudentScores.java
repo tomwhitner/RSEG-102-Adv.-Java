@@ -36,7 +36,7 @@ public class StudentScores {
 			}
 		}		
 		
-		// Approach 2 - use object.equals();
+		// Approach 2 - use object.equals(), which considers Students equal if name as equal.
 		Student charlieSearch = new Student("Charlie", 0);
 		int charlierIndex = students.indexOf(charlieSearch);
 		assert charlierIndex != -1 : "Charlie not found in collection";
@@ -52,6 +52,5 @@ public class StudentScores {
 		for (Student s : students) {
 			System.out.println(s);
 		}
-
 	}
 }

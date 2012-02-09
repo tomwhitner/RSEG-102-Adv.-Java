@@ -2,6 +2,11 @@ package tom.interfaces;
 
 import java.math.BigDecimal;
 
+/**
+ * Sales is an interface that describes the common behavior for sales employees.
+ * @author tom
+ *
+ */
 public interface Sales extends Employee {
 
 	/**

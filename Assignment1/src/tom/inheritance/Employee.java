@@ -55,8 +55,7 @@ public abstract class Employee {
 	/**
 	 * The number of pay periods per year
 	 */
-	protected static final BigDecimal NUMBER_OF_PAY_PERIODS = new BigDecimal(
-			"26");
+	protected static final BigDecimal NUMBER_OF_PAY_PERIODS = new BigDecimal("26");
 
 	/**
 	 * Performs earnings and vacation calculations and prints paycheck.

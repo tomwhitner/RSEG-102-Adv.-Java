@@ -5,7 +5,6 @@ import java.util.Date;
 
 /**
  * TemporaryEmployee represents and hourly based employee
- * 
  * @author tom
  * 
  */

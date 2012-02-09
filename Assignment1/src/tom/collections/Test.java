@@ -30,15 +30,14 @@ public class Test {
 			
 			// Find the size of the collection.
 			System.out.println("Collection size = " + collection.size());
+			System.out.println();
 			
 			// Iterate over this unsorted list. 
 			printCollection(collection);
 			
 			// Do reverse iteration over this unsorted list. 
-			for (int i=collection.size() - 1; i >=0 ; i--) {
-				System.out.print(collection.get(i) + ",");
-			}
-			System.out.println();
+			Collections.reverse(collection);
+			printCollection(collection);
 			
 			// Make the list iteration in natural sorting order.
 			Collections.sort(collection);
@@ -63,16 +62,24 @@ public class Test {
 			
 			// Check if it is empty and its size.
 			System.out.println("Collection isEmpty = " + collection.isEmpty());
-			System.out.println("Collection size = " + collection.size());
-		
-			// Print output from all the above operations to the standard output.
-			
+			System.out.println("Collection size = " + collection.size());			
 		}
 		
+		private static int maxLineLength = 80;
+	
+		// This method enumerates the collection and outputs its contents to the console.
+		// It will line break and indent at approximately maxLineLength character intervals.
 		private static void printCollection(Collection<String> c) {
+			StringBuilder sb = new StringBuilder(maxLineLength + 10);
 			for (String s : c) {
-				System.out.print(s + ",");
+				sb.append(s + ",");
+				if (sb.length() > maxLineLength) {
+					System.out.println(sb.toString());
+					sb = new StringBuilder(maxLineLength + 10);
+					sb.append("  ");
+				}
 			}
-			System.out.println();				
-		}			
+			System.out.println(sb.toString());
+			System.out.println();
+		}		
 }

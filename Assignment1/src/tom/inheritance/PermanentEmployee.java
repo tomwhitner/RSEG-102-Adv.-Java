@@ -6,7 +6,6 @@ import java.util.Date;
 
 /**
  * PermanentEmployee represents a permanent salaried employee.
- * 
  * @author tom
  * 
  */

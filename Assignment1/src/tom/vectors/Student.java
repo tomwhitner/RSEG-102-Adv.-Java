@@ -2,7 +2,6 @@ package tom.vectors;
 
 public class Student {
 
-
 	public Student(String name, double score) {
 		this.name = name;
 		this.score = score;
@@ -21,6 +20,9 @@ public class Student {
 		return "Student [name=" + name + ", score=" + score + "]";
 	}
 
+	/**
+	 * Students are considered equal if names are equal.
+	 */
 	@Override
 	public boolean equals(Object otherObject) {
 		  // a quick test to see if the objects are identical
@@ -44,6 +46,7 @@ public class Student {
 	public int hashCode() {
 		return this.name.hashCode();
 	}
+	
 	private String name;
 	private double score;
 
