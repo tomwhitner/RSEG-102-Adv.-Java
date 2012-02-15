@@ -19,6 +19,14 @@ public class Name {
 		return n.first.equals(first) && n.last.equals(last);
 	}
 
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((first == null) ? 0 : first.hashCode());
+		result = prime * result + ((last == null) ? 0 : last.hashCode());
+		return result;
+	}
+	
 	public static void main(String[] args) {
 		Set s = new HashSet();
 		s.add(new Name("Mickey", "Mouse"));
