@@ -6,6 +6,7 @@ public class Main {
 		
 		// expected to work
 		Size s1 = Size.valueOf("LARGE"); 
+		//  tom's edit
 		
 		// does case matter?
 		Size s2 = Size.valueOf("Large");   
