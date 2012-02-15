@@ -45,8 +45,10 @@ public class GenericTest {
 	// You can supply parameters to methods, but you can’t use the return values. 
 	private static void testSuper(GenericClass<? super Dog> gc_is_super_of_dog) {
 		gc_is_super_of_dog.foo();
+		Animal animal = new Animal("Any", "Ralph");
 		Dog dog = new Dog("Fido");
 		Poodle poodle = new Poodle("Foofie");
+		// gc_is_super_of_dog.setOne(animal);  // The method setOne(capture#6-of ? super Dog) in the type GenericClass<capture#6-of ? super Dog> is not applicable for the arguments (Animal)
 		gc_is_super_of_dog.setOne(dog);
 		gc_is_super_of_dog.setOne(poodle);
 		Object o = gc_is_super_of_dog.getOne();
