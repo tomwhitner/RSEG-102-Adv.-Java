@@ -16,36 +16,38 @@ import javax.swing.JTree;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultMutableTreeNode;
 
-public class ToDoFrame extends JFrame {
+public class ToDoTaskListFrame extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 
-	public ToDoFrame() {
+	public ToDoTaskListFrame() {
 		
 		// set frame title
-		setTitle("TextArea Demo");
+		setTitle("To-Do Task List");
 
 		// set frame size
 		setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
-		createTree();
+		createTaskTree();
 		
 		createButtonPanel();
 
 	}
 	
+	private JTextField taskTextField = new JTextField(20);
+	private JComboBox priorityComboBox = new JComboBox();
+	
 	private void createButtonPanel() {
 		JPanel panel = new JPanel();
-		
-		
+			
 		JLabel taskLabel = new JLabel("Task");
 		panel.add(taskLabel);
-		JTextField taskTextField = new JTextField(20);
+		
 		panel.add(taskTextField);
 		
 		JLabel priorityLabel = new JLabel("Priority");
 		panel.add(priorityLabel);
-		JComboBox priorityComboBox = new JComboBox();
+		
 		for (int i = 1; i <= numberOfPriorities; i++) {
 			priorityComboBox.addItem(i);
 		}
@@ -68,19 +70,24 @@ public class ToDoFrame extends JFrame {
 	private final DefaultMutableTreeNode root = new DefaultMutableTreeNode("Tasks");
 	private final Map<Integer, DefaultMutableTreeNode> priorityNodes = new HashMap<Integer, DefaultMutableTreeNode>(numberOfPriorities);
 
-	private void createTree() {
+	private void createTaskTree() {
 
+		// add the priority nodes to the root
+		// also add to the map so they can be easily located later.
 		for (int i = 1; i <= numberOfPriorities; i++) {
 			DefaultMutableTreeNode node = new DefaultMutableTreeNode("P" + i);
-			priorityNodes.put(i, node);
+			priorityNodes.put(i, node);  
 			root.add(node);
 		}
 
+		// create the tree 
 		JTree tree = new JTree(root);
+		// create a scroll pane for the tree
 		JScrollPane scrollPane = new JScrollPane(tree);
+		// add everything to the frame
 		this.add(scrollPane, BorderLayout.CENTER);
 	}
 
-	public static final int DEFAULT_WIDTH = 300;
-	public static final int DEFAULT_HEIGHT = 200;
+	public static final int DEFAULT_WIDTH = 480;
+	public static final int DEFAULT_HEIGHT = 400;
 }
