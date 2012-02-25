@@ -18,7 +18,6 @@ import javax.swing.JTree;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -29,7 +28,7 @@ public class ToDoTaskListFrame extends JFrame {
 	public ToDoTaskListFrame() {
 
 		// set frame title
-		setTitle("To-Do Task List");
+		setTitle(TITLE);
 
 		// set frame size
 		setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
@@ -112,6 +111,7 @@ public class ToDoTaskListFrame extends JFrame {
 		this.add(scrollPane, BorderLayout.CENTER);
 	}
 
+	public static final String TITLE = "To-Do Task List";
 	public static final int DEFAULT_WIDTH = 480;
 	public static final int DEFAULT_HEIGHT = 400;
 
