@@ -23,8 +23,6 @@ import javax.swing.tree.TreeSelectionModel;
 
 public class ToDoTaskListFrame extends JFrame {
 
-	private static final long serialVersionUID = 1L;
-
 	public ToDoTaskListFrame() {
 
 		// set frame title
@@ -111,9 +109,10 @@ public class ToDoTaskListFrame extends JFrame {
 		this.add(scrollPane, BorderLayout.CENTER);
 	}
 
-	public static final String TITLE = "To-Do Task List";
-	public static final int DEFAULT_WIDTH = 480;
-	public static final int DEFAULT_HEIGHT = 400;
+	private static final String TITLE = "To-Do Task List";
+	private static final int DEFAULT_WIDTH = 480;
+	private static final int DEFAULT_HEIGHT = 400;
+	private static final long serialVersionUID = 1L;
 
 	private class AddListener implements ActionListener {
 
