@@ -18,8 +18,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JToolBar;
 
-public class TextPadFrame extends JFrame {
+import whitner.swing.GBC;
 
+public class TextPadFrame extends JFrame {
 
 	private static final int DEFAULT_HEIGHT = 600;
 	private static final int DEFAULT_WIDTH = 800;
@@ -28,7 +29,7 @@ public class TextPadFrame extends JFrame {
 	private static final String TITLE = "Text Pad";
 	private static final String ABOUT_TITLE = "About " + TITLE;
 	private static final String ABOUT_MESSAGE = "Text Pad Application written by Tom Whitner\n" + 
-			"for RSEG xxx";
+			"for 121RSEG-102-1DL: Advanced Programming in Java";
 
 	private Action[] colorActions = createColorActions();
 	private Action[] fontNameActions = createFontNameActions();
