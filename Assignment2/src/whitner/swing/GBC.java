@@ -1,4 +1,4 @@
-package whitner.swing.textpad;
+package whitner.swing;
 
 import java.awt.*;
 
