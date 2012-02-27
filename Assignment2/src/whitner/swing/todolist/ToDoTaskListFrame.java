@@ -1,11 +1,13 @@
 package whitner.swing.todolist;
 
 import java.awt.BorderLayout;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -15,6 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -25,6 +28,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import whitner.swing.GBC;
+
 public class ToDoTaskListFrame extends JFrame {
 
 	public ToDoTaskListFrame() {
@@ -34,17 +39,61 @@ public class ToDoTaskListFrame extends JFrame {
 
 		// set frame size
 		setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+		
+		// use a grid layout
+		setLayout(new GridBagLayout());
 
-		createTaskTree();
+		tree = createTaskTree();
+		add(new JScrollPane(tree), new GBC(0, 0).setFill(GBC.BOTH).setWeight(100, 100));
 
-		createButtonPanel();
-
+		add(createEditPanel(), new GBC(0, 1).setFill(GBC.HORIZONTAL).setWeight(100, 0));
+		
+		add(createActionPanel(), new GBC(0, 2).setFill(GBC.HORIZONTAL).setWeight(100, 0));
 	}
 
+	private JTree tree = null;
 	private final JTextField taskTextField = new JTextField(20);
 	private final JComboBox priorityComboBox = new JComboBox();
+	
+	private JTree createTaskTree() {
+		
+		// create root node
+		DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Tasks");
+		
+		// create model
+		DefaultTreeModel model = new DefaultTreeModel(rootNode);
 
-	private void createButtonPanel() {
+		// create the tree
+		JTree tree = new JTree(model);
+		
+		tree.getSelectionModel().addTreeSelectionListener( new TreeSelectionListener() {
+
+			@Override
+			public void valueChanged(TreeSelectionEvent e) {
+				System.out.println("e = " + e );
+			}
+			
+		});
+
+		tree.getSelectionModel().setSelectionMode(
+				TreeSelectionModel.SINGLE_TREE_SELECTION);
+
+		DefaultMutableTreeNode priorityNode = null;
+		// add the priority nodes to the root
+		for (int i = 1; i <= numberOfPriorities; i++) {
+			priorityNode = new DefaultMutableTreeNode("P" + i);
+			model.insertNodeInto(priorityNode, rootNode, i-1);
+		}
+		
+		// display new node
+		tree.scrollPathToVisible(new TreePath(priorityNode.getPath()));
+		
+		return tree;
+	}
+
+
+	private JPanel createEditPanel() {
+		
 		JPanel panel = new JPanel();
 
 		JLabel taskLabel = new JLabel("Task");
@@ -60,129 +109,86 @@ public class ToDoTaskListFrame extends JFrame {
 		}
 		panel.add(priorityComboBox);
 
-		JButton addButton = new JButton("Add");
-		addButton.addActionListener(new AddListener());
-		panel.add(addButton);
+		panel.setBorder(BorderFactory.createEtchedBorder());
 
-		JButton updateButton = new JButton("Update");
-		updateButton.addActionListener(new UpdateListener());
-		panel.add(updateButton);
-
-		JButton deleteButton = new JButton("Delete");
-		deleteButton.addActionListener(new DeleteListener());
-		panel.add(deleteButton);
-
-		Border border = BorderFactory.createEtchedBorder();
-		panel.setBorder(border);
-
-		this.add(panel, BorderLayout.SOUTH);
+		return panel;
 	}
 
-	private final int numberOfPriorities = 10;
-	private DefaultMutableTreeNode rootNode;
-	private Map<Integer, DefaultMutableTreeNode> priorityNodes = new HashMap<Integer, DefaultMutableTreeNode>(
-			numberOfPriorities);
-	private DefaultTreeModel model = null;
-	private JTree tree = null;
-
-	private void createTaskTree() {
-
-		rootNode = new DefaultMutableTreeNode("Tasks");
-
-		// create the model
-		model = new DefaultTreeModel(rootNode);
-
-		// create the tree
-		tree = new JTree(rootNode);
+	private JPanel createActionPanel() {
 		
-		model.addTreeModelListener(new TreeModelListener() {
+		JPanel panel = new JPanel();
 
-			@Override
-			public void treeNodesChanged(TreeModelEvent e) {
-				System.out.println("treeNodesChanged => " + e );
-			}
+		panel.add(new JButton(new AddAction()));
+		panel.add(new JButton(new UpdateAction()));
+		panel.add(new JButton(new DeleteAction()));
 
-			@Override
-			public void treeNodesInserted(TreeModelEvent e) {
-				System.out.println("treeNodesInserted => " + e );
-			}
+		panel.setBorder(BorderFactory.createEtchedBorder());
 
-			@Override
-			public void treeNodesRemoved(TreeModelEvent e) {
-				System.out.println("treeNodesRemoved => " + e );
-			}
-
-			@Override
-			public void treeStructureChanged(TreeModelEvent e) {
-				System.out.println("treeNodesRemoved => " + e );
-			}
-			
-		});
-		
-		tree.getSelectionModel().addTreeSelectionListener( new TreeSelectionListener() {
-
-			@Override
-			public void valueChanged(TreeSelectionEvent e) {
-				System.out.println("e = " + e );
-			}
-			
-		});
-
-		tree.getSelectionModel().setSelectionMode(
-				TreeSelectionModel.SINGLE_TREE_SELECTION);
-		tree.setShowsRootHandles(true);
-
-		// add the priority nodes to the root
-		// also add to the map so they can be easily located later.
-		for (int i = 1; i <= numberOfPriorities; i++) {
-			DefaultMutableTreeNode node = new DefaultMutableTreeNode("P" + i);
-			priorityNodes.put(i, node);
-			rootNode.add(node);
-		}
-
-		// create a scroll pane for the tree
-		JScrollPane scrollPane = new JScrollPane(tree);
-		// add everything to the frame
-		this.add(scrollPane, BorderLayout.CENTER);
+		return panel;
 	}
 
 	private static final String TITLE = "To-Do Task List";
 	private static final int DEFAULT_WIDTH = 480;
 	private static final int DEFAULT_HEIGHT = 400;
-	private static final long serialVersionUID = 1L;
+	private final int numberOfPriorities = 10;
 
-	private class AddListener implements ActionListener {
+	private DefaultMutableTreeNode getPriorityNode(int priority) {
+		return (DefaultMutableTreeNode) getModel().getChild(getModel().getRoot(), priority-1);
+	}
+	
+	private DefaultTreeModel getModel() 
+	{
+		return (tree == null ? null : (DefaultTreeModel)(tree.getModel()));
+	}
 
+	private class AddAction extends AbstractAction {
+
+		public AddAction() {
+			super("Add");
+		}
+		
 		@Override
 		public void actionPerformed(ActionEvent e) {
 
 			// get task text
 			String task = taskTextField.getText();
+			
+			// clear text field
+			taskTextField.setText("");
 
 			// get task priority
 			Integer priority = (Integer) priorityComboBox.getSelectedItem();
 
 			// create new task node
-			DefaultMutableTreeNode newTaskNode = new DefaultMutableTreeNode(
-					task);
+			DefaultMutableTreeNode newTaskNode = new DefaultMutableTreeNode(task);
 
 			// locate parent priority node
-			DefaultMutableTreeNode parent = priorityNodes.get(priority);
+			DefaultMutableTreeNode parent = getPriorityNode(priority);
 
 			// insert new node in model
-			int location = parent.getChildCount();
-			model.insertNodeInto(newTaskNode, parent, location);
-			// parent.add(newTaskNode);
-
-			// display new node
-			tree.scrollPathToVisible(new TreePath(newTaskNode.getPath()));
-
-			// this should not be needed.
-			//tree.updateUI();
+			getModel().insertNodeInto(newTaskNode, parent, parent.getChildCount());
+			
+			selectAndDisplayNode(newTaskNode);			
 		}
 	}
+	
+	private void selectAndDisplayNode(DefaultMutableTreeNode node) {
+		
+		TreePath path = new TreePath(node.getPath());
+		
+		// select node
+		tree.setSelectionPath(path);
 
-	private class DeleteListener implements ActionListener {
+		// display node
+		tree.scrollPathToVisible(path);
+		
+	}
+	
+	private class DeleteAction extends AbstractAction {
+		
+		public DeleteAction() {
+			super("Delete");
+		}
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -200,14 +206,13 @@ public class ToDoTaskListFrame extends JFrame {
 
 				// if the parent is root then selected is a priority node
 				// which should not be deleted, therefore, exit.
-				if (parentNode == rootNode)
+				if (parentNode == getModel().getRoot())
 					return;
 
 				// remove the node from the model
-				model.removeNodeFromParent(selectedNode);
-
-				// this should not be needed.
-				//tree.updateUI();
+				getModel().removeNodeFromParent(selectedNode);
+				
+				selectAndDisplayNode(parentNode);
 
 			}
 
@@ -215,7 +220,11 @@ public class ToDoTaskListFrame extends JFrame {
 
 	}
 
-	private class UpdateListener implements ActionListener {
+	private class UpdateAction extends AbstractAction {
+		
+		public UpdateAction() {
+			super("Update");
+		}
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -224,6 +233,7 @@ public class ToDoTaskListFrame extends JFrame {
 			DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree
 					.getLastSelectedPathComponent();
 
+			
 			// proceed if a node is selected and it has a parent
 			if (selectedNode != null && selectedNode.getParent() != null) {
 
@@ -233,28 +243,30 @@ public class ToDoTaskListFrame extends JFrame {
 
 				// if the parent is root then selected is a priority node
 				// which should not be updated, therefore, exit.
-				if (parentNode == rootNode) return;
+				if (parentNode == getModel().getRoot()) return;
 				
 				// remove the node from the model
-				model.removeNodeFromParent(selectedNode);
+				getModel().removeNodeFromParent(selectedNode);
+				
+				// get task text
+				String task = taskTextField.getText();
+				
+				// clear text field
+				taskTextField.setText("");
+				
+				// update the text
+				selectedNode.setUserObject(task);
 
 				// get task priority
 				Integer priority = (Integer) priorityComboBox.getSelectedItem();
 
 				// locate parent priority node
-				DefaultMutableTreeNode parent = priorityNodes.get(priority);
+				DefaultMutableTreeNode parent = getPriorityNode(priority);
 
 				// insert new node in model
-				int location = parent.getChildCount();
-				model.insertNodeInto(selectedNode, parent, location);
-				// parent.add(newTaskNode);
+				getModel().insertNodeInto(selectedNode, parent, parent.getChildCount());
 
-				// display new node
-				tree.scrollPathToVisible(new TreePath(selectedNode.getPath()));
-
-				// this should not be needed.
-				//tree.updateUI();
-
+				selectAndDisplayNode(selectedNode);			
 
 			}
 		}
