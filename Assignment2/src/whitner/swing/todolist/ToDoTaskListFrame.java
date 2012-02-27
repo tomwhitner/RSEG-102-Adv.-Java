@@ -16,6 +16,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.border.Border;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -90,6 +94,39 @@ public class ToDoTaskListFrame extends JFrame {
 
 		// create the tree
 		tree = new JTree(rootNode);
+		
+		model.addTreeModelListener(new TreeModelListener() {
+
+			@Override
+			public void treeNodesChanged(TreeModelEvent e) {
+				System.out.println("treeNodesChanged => " + e );
+			}
+
+			@Override
+			public void treeNodesInserted(TreeModelEvent e) {
+				System.out.println("treeNodesInserted => " + e );
+			}
+
+			@Override
+			public void treeNodesRemoved(TreeModelEvent e) {
+				System.out.println("treeNodesRemoved => " + e );
+			}
+
+			@Override
+			public void treeStructureChanged(TreeModelEvent e) {
+				System.out.println("treeNodesRemoved => " + e );
+			}
+			
+		});
+		
+		tree.getSelectionModel().addTreeSelectionListener( new TreeSelectionListener() {
+
+			@Override
+			public void valueChanged(TreeSelectionEvent e) {
+				System.out.println("e = " + e );
+			}
+			
+		});
 
 		tree.getSelectionModel().setSelectionMode(
 				TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -141,7 +178,7 @@ public class ToDoTaskListFrame extends JFrame {
 			tree.scrollPathToVisible(new TreePath(newTaskNode.getPath()));
 
 			// this should not be needed.
-			tree.updateUI();
+			//tree.updateUI();
 		}
 	}
 
@@ -170,7 +207,7 @@ public class ToDoTaskListFrame extends JFrame {
 				model.removeNodeFromParent(selectedNode);
 
 				// this should not be needed.
-				tree.updateUI();
+				//tree.updateUI();
 
 			}
 
@@ -216,7 +253,7 @@ public class ToDoTaskListFrame extends JFrame {
 				tree.scrollPathToVisible(new TreePath(selectedNode.getPath()));
 
 				// this should not be needed.
-				tree.updateUI();
+				//tree.updateUI();
 
 
 			}

@@ -1,9 +1,8 @@
 package whitner.swing.textpad;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.TextArea;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
@@ -14,9 +13,116 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JToolBar;
 
 public class TextPadFrame extends JFrame {
+
+	private class ColorAction extends MyAbstractAction {
+		public ColorAction(String name, Icon icon, String tooltip, Color c) {
+			super(name, icon);
+			putValue(Action.SHORT_DESCRIPTION, tooltip);
+			putValue("Color", c);
+		}
+
+		@Override
+		public void doActionPerformed(ActionEvent event) {
+			textArea.setForeground((Color) getValue("Color"));
+		}
+	}
+
+	private ColorAction createColorAction(String colorName, Color color,
+			String iconFile) {
+		return new ColorAction(colorName, new ImageIcon(
+				TextPadFrame.class.getResource(iconFile)),
+				"Change text color to " + colorName, color);
+	}
+
+	private class FontNameAction extends MyAbstractAction {
+		public FontNameAction(String name, Icon icon, String tooltip,
+				String fontName) {
+			super(name, icon);
+			putValue(Action.SHORT_DESCRIPTION, tooltip);
+			putValue("Font", fontName);
+		}
+
+		@Override
+		public void doActionPerformed(ActionEvent event) {
+			Font currentFont = textArea.getFont();
+			Font f = new Font((String) getValue("Font"), currentFont.getStyle(), currentFont.getSize());
+			textArea.setFont(f);
+		}
+	}
+
+	private FontNameAction createFontNameAction(String fontName, String iconFile) {
+		return new FontNameAction(fontName, new ImageIcon(
+				TextPadFrame.class.getResource(iconFile)), "Change font to "
+				+ fontName, fontName);
+	}
+
+	private class FontSizeAction extends MyAbstractAction {
+		public FontSizeAction(String name, Icon icon, String tooltip) {
+			super(name, icon);
+			putValue(Action.SHORT_DESCRIPTION, tooltip);
+		}
+
+		@Override
+		public void doActionPerformed(ActionEvent event) {
+			Integer fontSize = (Integer) fontsizeComboBox.getSelectedItem();
+			Font currentFont = textArea.getFont();
+			Font f = new Font(currentFont.getFontName(),
+					currentFont.getStyle(), fontSize);
+			textArea.setFont(f);
+		}
+	}
+
+	private abstract class MyAbstractAction extends AbstractAction {
+
+		public MyAbstractAction(String name) {
+			super(name);
+		}
+
+		public MyAbstractAction(String name, Icon icon) {
+			super(name, icon);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			System.out.println("Action '" + getValue(Action.NAME)
+					+ "' selected.");
+			doActionPerformed(e);
+		}
+
+		public abstract void doActionPerformed(ActionEvent e);
+
+	}
+
+	private static final int DEFAULT_HEIGHT = 600;
+	private static final int DEFAULT_WIDTH = 800;
+	private static final String SAMPLE_TEXT = "Advanced Java Programming Swing Assignment written by Tom Whitner - \n" + 
+			"this sample text specified at the time of creation is used for testing the module.";
+	private static final String TITLE = "Text Pad";
+	private static final String ABOUT_TITLE = "About " + TITLE;
+	private static final String ABOUT_MESSAGE = "Text Pad Application written by Tom Whitner\n" + 
+			"for RSEG xxx";
+
+	private final Action aboutAction = new MyAbstractAction("About") {
+
+		@Override
+		public void doActionPerformed(ActionEvent event) {
+			JOptionPane.showMessageDialog(TextPadFrame.this, ABOUT_MESSAGE,
+					ABOUT_TITLE, JOptionPane.PLAIN_MESSAGE);
+		}
+	};
+
+	private Action[] colorActions = createColorActions();
+	private Action[] fontNameActions = createFontNameActions();
+	private final Action fontSizeAction = new FontSizeAction("FontSize", null,
+			"Change the font size");
+	private final JComboBox fontsizeComboBox = createComboBox();
+	private final JTextArea textArea = new JTextArea(SAMPLE_TEXT);
 
 	public TextPadFrame() {
 
@@ -25,117 +131,100 @@ public class TextPadFrame extends JFrame {
 
 		// set frame size
 		setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+		
+		// use a grid layout
+		GridBagLayout layout = new GridBagLayout();
+		this.setLayout(layout);
 
-		// create menu
-		createMenu();
+		// create menuBar
+		this.setJMenuBar(createMenuBar());
 
 		// create toolbar
-		createToolbar();
+		this.add(createToolbar(), new GBC(0, 0).setAnchor(GBC.WEST).setWeight(0, 0));
+
+		this.add(new JScrollPane(textArea), new GBC(0, 1).setFill(GBC.BOTH).setWeight(100, 100));
 		
-		fontsizeComboBox.addItem(12);
-		fontsizeComboBox.addItem(14);
-		fontsizeComboBox.addItem(16);
-		
-		this.add(textArea, BorderLayout.SOUTH);
+		fontNameActions[0].actionPerformed(null);
 	}
 
-	private void createMenu() {
-		
+	private JComboBox createComboBox() {
+		JComboBox comboBox = new JComboBox();
+		comboBox.addItem(12);
+		comboBox.addItem(16);
+		comboBox.addItem(20);
+
+		comboBox.setAction(fontSizeAction);
+		return comboBox;
+	}
+
+	private Action[] createColorActions() {
+		Action[] actions = new ColorAction[3];
+		actions[0] = createColorAction("Blue", Color.BLUE,
+				"images/1018-point_blue.png");
+		actions[1] = createColorAction("Red", Color.RED,
+				"images/1019-point_red.png");
+		actions[2] = createColorAction("Green", Color.GREEN,
+				"images/1020-point_green.png");
+		return actions;
+	}
+
+	private Action[] createFontNameActions() {
+		Action[] actions = new FontNameAction[3];
+		actions[0] = createFontNameAction("Arial",
+				"images/2080-triangle_blue.png");
+		actions[1] = createFontNameAction("Courier",
+				"images/2083-triangle_red.png");
+		actions[2] = createFontNameAction("Times New Roman",
+				"images/2082-triangle_green.png");
+		return actions;
+	}
+
+	private JMenuBar createMenuBar() {
+
 		JMenu formatMenu = new JMenu("Format");
-		
+
 		JMenu colorMenu = new JMenu("Color");
-		colorMenu.add(blueAction);
-		colorMenu.add(redAction);
-		colorMenu.add(greenAction);
-		
+		for (Action ca : colorActions) {
+			colorMenu.add(ca);
+		}
+
 		JMenu fontMenu = new JMenu("Font");
-		fontMenu.add(arialAction);
-		fontMenu.add(timesNewRomanAction);
-		fontMenu.add(courierAction);
+		for (Action fna : fontNameActions) {
+			fontMenu.add(fna);
+		}
 
 		JMenu helpMenu = new JMenu("Help");
 		helpMenu.add(aboutAction);
-		
+
 		formatMenu.add(colorMenu);
 		formatMenu.add(fontMenu);
 
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(formatMenu);
 		menuBar.add(helpMenu);
-		
-		this.setJMenuBar(menuBar);
+
+		return menuBar;
 	}
 
-	private void createToolbar() {
-		
+	private JToolBar createToolbar() {
+
 		JToolBar toolBar = new JToolBar();
-		
-		toolBar.add(blueAction);
-		toolBar.add(redAction);
-		toolBar.add(greenAction);
-		
+
+		for (Action ca : colorActions) {
+			toolBar.add(ca);
+		}
+
 		toolBar.addSeparator();
-		
-		toolBar.add(arialAction);
-		toolBar.add(timesNewRomanAction);
-		toolBar.add(courierAction);
+
+		for (Action fna : fontNameActions) {
+			toolBar.add(fna);
+		}
 
 		toolBar.addSeparator();
 
 		toolBar.add(fontsizeComboBox);
-		
-		this.add(toolBar, BorderLayout.NORTH);
+
+		return toolBar;
 	}
-	
-	private final TextArea textArea = new TextArea(SAMPLE_TEXT);
-	private final JComboBox fontsizeComboBox = new JComboBox();
 
-	private final ColorAction blueAction = new ColorAction("Blue", new ImageIcon(TextPadFrame.class.getResource("images/1018-point_blue.png")), "Change text color to blue", Color.BLUE);
-	private final ColorAction redAction = new ColorAction("Red", new ImageIcon(TextPadFrame.class.getResource("images/1019-point_red.png")), "Change text color to red", Color.RED);
-	private final ColorAction greenAction = new ColorAction("Green", new ImageIcon(TextPadFrame.class.getResource("images/1020-point_green.png")), "Change text color to green", Color.GREEN);
-	private final FontAction arialAction = new FontAction("Arial", null, "Change font to Arial", "Arial");
-	private final FontAction timesNewRomanAction = new FontAction("Times New Roman", null, "Change font to Times New Roman", "Times New Roman");
-	private final FontAction courierAction = new FontAction("Courier", null, "Change font to Courier", "Courier");
-	
-	private final AbstractAction aboutAction = new AbstractAction ("About") {
-
-		@Override
-		public void actionPerformed(ActionEvent event) {
-			System.out.println(getValue(Action.NAME) + " selected.");
-		}
-	};
-			
-	private static final String SAMPLE_TEXT = "Now is the time for all good men to come to the aid of their country.";
-	private static final String TITLE = "Text Pad";
-	private static final int DEFAULT_WIDTH = 480;
-	private static final int DEFAULT_HEIGHT = 400;
-	private static final long serialVersionUID = 1L;
-
-	private class ColorAction extends AbstractAction {
-		public ColorAction(String name, Icon icon, String tooltip, Color c) {
-			super(name, icon);
-			putValue(Action.SHORT_DESCRIPTION, tooltip);
-			putValue("Color", c);
-		}
-
-		public void actionPerformed(ActionEvent event) {
-			System.out.println(getValue(Action.NAME) + " selected.");
-			textArea.setForeground((Color)getValue("Color"));
-		}
-	}
-	
-	private class FontAction extends AbstractAction {
-		public FontAction(String name, Icon icon, String tooltip, String fontName) {
-			super(name, icon);
-			putValue(Action.SHORT_DESCRIPTION, tooltip);
-			putValue("Font", fontName);
-		}
-
-		public void actionPerformed(ActionEvent event) {
-			System.out.println(getValue(Action.NAME) + " selected.");
-			Integer fontSize = (Integer) fontsizeComboBox.getSelectedItem();
-			Font f = new Font((String)getValue("Font"), Font.PLAIN, fontSize);
-			textArea.setFont(f);
-		}
-	}
 }
