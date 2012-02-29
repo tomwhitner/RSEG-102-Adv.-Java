@@ -1,5 +1,6 @@
 package whitner.swing.todolist;
 
+import java.awt.EventQueue;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 
@@ -21,20 +22,42 @@ import javax.swing.tree.TreeSelectionModel;
 
 import whitner.swing.GBC;
 
+/*
+ * This class implements the To-Do List frame.
+ */
 public class ToDoTaskListFrame extends JFrame {
+	
+	/*
+	 * Standard Java Swing start-up method
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				ToDoTaskListFrame frame = new ToDoTaskListFrame();
+				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				frame.setVisible(true);
+			}
+		});
+	}
 
+	// components that are referenced by actions
 	private JTree tree = null;
 	private final JTextField taskTextField = new JTextField(20);
 	private final JComboBox priorityComboBox = new JComboBox();
 	
+	// actions that are enabled/disabled
 	private UpdateAction updateAction = new UpdateAction();
 	private DeleteAction deleteAction = new DeleteAction();
 
+	// constants
 	private static final String TITLE = "To-Do Task List";
 	private static final int DEFAULT_WIDTH = 480;
 	private static final int DEFAULT_HEIGHT = 400;
-	private final int numberOfPriorities = 10;
+	private static final int numberOfPriorities = 10;
 
+	/*
+	 * constructor
+	 */
 	public ToDoTaskListFrame() {
 
 		// set frame title
@@ -59,6 +82,9 @@ public class ToDoTaskListFrame extends JFrame {
 		add(createActionPanel(), new GBC(0, 2).setFill(GBC.HORIZONTAL).setWeight(100, 0));
 	}
 
+	/*
+	 * Creates the task tree UI component
+	 */
 	private JTree createTaskTree() {
 		
 		// create root node
@@ -70,6 +96,10 @@ public class ToDoTaskListFrame extends JFrame {
 		// create the tree
 		JTree tree = new JTree(model);
 		
+		// allow only single selection
+		tree.getSelectionModel().setSelectionMode(
+				TreeSelectionModel.SINGLE_TREE_SELECTION);
+
 		/*
 		 * Class to manage UI behavior on selection
 		 * Update task text, enable/disable buttons
@@ -88,20 +118,15 @@ public class ToDoTaskListFrame extends JFrame {
 				// enable/disable actions based on task selection
 				updateAction.setEnabled(taskIsSelected);
 				deleteAction.setEnabled(taskIsSelected);
-				String taskText = "";
 				
+				// display or clear task text
+				String taskText = "";
 				if (taskIsSelected) {
-					// display task text
 					taskText = (String)taskNode.getUserObject();
 				} 
-				
 				ToDoTaskListFrame.this.taskTextField.setText(taskText);
 			}		
 		});
-
-		// allow only single selection
-		tree.getSelectionModel().setSelectionMode(
-				TreeSelectionModel.SINGLE_TREE_SELECTION);
 
 		DefaultMutableTreeNode priorityNode = null;
 		
@@ -122,6 +147,7 @@ public class ToDoTaskListFrame extends JFrame {
 	 */
 	private JPanel createEditPanel() {
 		
+		// create the panel
 		JPanel panel = new JPanel();
 
 		// create and add the task label
@@ -150,6 +176,7 @@ public class ToDoTaskListFrame extends JFrame {
 	 */
 	private JPanel createActionPanel() {
 		
+		// create the panel
 		JPanel panel = new JPanel();
 
 		// Add the buttons with related actions
@@ -161,8 +188,7 @@ public class ToDoTaskListFrame extends JFrame {
 	}
 
 	/*
-	 * Class implements Add action.  
-	 * Adds new task to the tree.
+	 * Class implements Add action.  Adds new task to the tree.
 	 */
 	private class AddAction extends AbstractAction {
 
@@ -196,8 +222,7 @@ public class ToDoTaskListFrame extends JFrame {
 	}
 		
 	/*
-	 * Class implements Delete action.  
-	 * Removes selected task from the tree.
+	 * Class implements Delete action.  Removes selected task from the tree.
 	 */
 	private class DeleteAction extends AbstractAction {
 		
@@ -225,8 +250,7 @@ public class ToDoTaskListFrame extends JFrame {
 	}
 
 	/*
-	 * Class implements Update action.  
-	 * Updates task text and priority.
+	 * Class implements Update action.  Updates task text and priority.
 	 */
 	private class UpdateAction extends AbstractAction {
 		
@@ -290,11 +314,12 @@ public class ToDoTaskListFrame extends JFrame {
 			}				
 		}
 		
+		// neither priority nor task node is selected
 		return new SelectedNodes(null, null);
 	}
 	
 	/*
-	 * Class for return selected node information
+	 * Class for returning selected node information
 	 */
 	private class SelectedNodes {
 		
