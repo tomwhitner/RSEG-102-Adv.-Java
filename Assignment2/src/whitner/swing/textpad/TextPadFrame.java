@@ -1,6 +1,7 @@
 package whitner.swing.textpad;
 
 import java.awt.Color;
+import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -20,16 +21,26 @@ import javax.swing.JToolBar;
 
 import whitner.swing.GBC;
 
+/*
+ * This class implements the TextPad frame.
+ */
 public class TextPadFrame extends JFrame {
 
-	private static final int DEFAULT_HEIGHT = 600;
-	private static final int DEFAULT_WIDTH = 800;
-	private static final String SAMPLE_TEXT = "Advanced Java Programming Swing Assignment written by Tom Whitner - \n" + 
-			"this sample text specified at the time of creation is used for testing the module.";
-	private static final String TITLE = "Text Pad";
-	private static final String ABOUT_TITLE = "About " + TITLE;
-	private static final String ABOUT_MESSAGE = "Text Pad Application written by Tom Whitner\n" + 
-			"for 121RSEG-102-1DL: Advanced Programming in Java";
+	/*
+	 * Standard Java Swing start-up method
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				TextPadFrame frame = new TextPadFrame();
+				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				frame.setVisible(true);
+			}
+		});
+	}
+
+	private final JComboBox fontsizeComboBox = createComboBox();
+	private final JTextArea textArea = new JTextArea(SAMPLE_TEXT);
 
 	private Action[] colorActions = createColorActions();
 	private Action[] fontNameActions = createFontNameActions();
@@ -43,8 +54,14 @@ public class TextPadFrame extends JFrame {
 		}
 	};
 	
-	private final JComboBox fontsizeComboBox = createComboBox();
-	private final JTextArea textArea = new JTextArea(SAMPLE_TEXT);
+	private static final int DEFAULT_HEIGHT = 600;
+	private static final int DEFAULT_WIDTH = 800;
+	private static final String SAMPLE_TEXT = "Advanced Java Programming Swing Assignment written by Tom Whitner - \n" + 
+			"this sample text specified at the time of creation is used for testing the module.";
+	private static final String TITLE = "Text Pad";
+	private static final String ABOUT_TITLE = "About " + TITLE;
+	private static final String ABOUT_MESSAGE = "Text Pad Application written by Tom Whitner\n" + 
+			"for 121RSEG-102-1DL: Advanced Programming in Java";
 
 	public TextPadFrame() {
 
