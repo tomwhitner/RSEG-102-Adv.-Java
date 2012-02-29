@@ -40,7 +40,7 @@ public class ToDoTaskListFrame extends JFrame {
 		});
 	}
 
-	// components that are referenced by actions
+	// components that are referenced by actions / methods
 	private JTree tree = null;
 	private final JTextField taskTextField = new JTextField(20);
 	private final JComboBox priorityComboBox = new JComboBox();

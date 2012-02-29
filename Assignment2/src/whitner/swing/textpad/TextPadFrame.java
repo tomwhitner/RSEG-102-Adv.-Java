@@ -39,21 +39,15 @@ public class TextPadFrame extends JFrame {
 		});
 	}
 
+	// components that are referenced by actions / methods
 	private final JComboBox fontsizeComboBox = createComboBox();
 	private final JTextArea textArea = new JTextArea(SAMPLE_TEXT);
 
+	// actions that are used more than once
 	private Action[] colorActions = createColorActions();
 	private Action[] fontNameActions = createFontNameActions();
-	private final Action fontSizeAction = new FontSizeAction("FontSize", null, "Change the font size");
-	private final Action aboutAction = new MyAbstractAction("About") {
-
-		@Override
-		public void doActionPerformed(ActionEvent event) {
-			JOptionPane.showMessageDialog(TextPadFrame.this, ABOUT_MESSAGE,
-					ABOUT_TITLE, JOptionPane.PLAIN_MESSAGE);
-		}
-	};
 	
+	// constants
 	private static final int DEFAULT_HEIGHT = 600;
 	private static final int DEFAULT_WIDTH = 800;
 	private static final String SAMPLE_TEXT = "Advanced Java Programming Swing Assignment written by Tom Whitner - \n" + 
@@ -63,6 +57,7 @@ public class TextPadFrame extends JFrame {
 	private static final String ABOUT_MESSAGE = "Text Pad Application written by Tom Whitner\n" + 
 			"for 121RSEG-102-1DL: Advanced Programming in Java";
 
+	// constructor
 	public TextPadFrame() {
 
 		// set frame title
@@ -87,75 +82,130 @@ public class TextPadFrame extends JFrame {
 		fontNameActions[0].actionPerformed(null);
 	}
 
+	/*
+	 * Creates the menu bar
+	 */
 	private JMenuBar createMenuBar() {
 
+		// create the format menu
 		JMenu formatMenu = new JMenu("Format");
 
+		// create the color sub-menu
 		JMenu colorMenu = new JMenu("Color");
+		
+		// add each color action to the format menu
 		for (Action ca : colorActions) {
 			colorMenu.add(ca);
 		}
 
+		// create the font sub-menu
 		JMenu fontMenu = new JMenu("Font");
+		
+		// add each font action to the font menu
 		for (Action fna : fontNameActions) {
 			fontMenu.add(fna);
 		}
 
+		// create the help sub-menu
 		JMenu helpMenu = new JMenu("Help");
-		helpMenu.add(aboutAction);
+		
+		// add the about action to the help menu
+		helpMenu.add(new AbstractAction("About") {
 
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				JOptionPane.showMessageDialog(TextPadFrame.this, ABOUT_MESSAGE,
+						ABOUT_TITLE, JOptionPane.PLAIN_MESSAGE);
+			}
+			});
+
+		// the the sub-menus to the format menu
 		formatMenu.add(colorMenu);
 		formatMenu.add(fontMenu);
 
+		// create the menu bar
 		JMenuBar menuBar = new JMenuBar();
+		
+		// add the menus to the menu bar
 		menuBar.add(formatMenu);
 		menuBar.add(helpMenu);
 
 		return menuBar;
 	}
 
+	/*
+	 * Creates the toolbar
+	 */
 	private JToolBar createToolbar() {
 
+		// create the toolbar
 		JToolBar toolBar = new JToolBar();
 
+		// add each color action to the toolbar
 		for (Action ca : colorActions) {
 			toolBar.add(ca);
 		}
 
+		// add a separator
 		toolBar.addSeparator();
 
+		// add each font action to the toolbar
 		for (Action fna : fontNameActions) {
 			toolBar.add(fna);
 		}
 
+		// add a separator
 		toolBar.addSeparator();
 
+		// add the combo box to the toolbar
 		toolBar.add(fontsizeComboBox);
 
 		return toolBar;
 	}
 	
+	/*
+	 * Creates the font size combo box
+	 */
 	private JComboBox createComboBox() {
+		
+		// create the combo box
 		JComboBox comboBox = new JComboBox();
+		
+		// add a few font sizes
 		comboBox.addItem(12);
 		comboBox.addItem(16);
 		comboBox.addItem(20);
 
-		comboBox.setAction(fontSizeAction);
+		// set the action to change font size
+		comboBox.setAction(new FontSizeAction("FontSize", null, "Change the font size"));
+		
 		return comboBox;
 	}
 
+	/*
+	 * Creates the array of possible color actions
+	 */
 	private Action[] createColorActions() {
-		Action[] actions = new ColorAction[3];
+		
+		// allocate the array
+		Action[] actions = new ColorAction[4];
+		
+		// create the actions and store in the array
 		actions[0] = createColorAction("Blue", Color.BLUE,
 				"images/1018-point_blue.png");
 		actions[1] = createColorAction("Red", Color.RED,
 				"images/1019-point_red.png");
 		actions[2] = createColorAction("Green", Color.GREEN,
 				"images/1020-point_green.png");
+		actions[3] = createColorAction("Yellow", Color.YELLOW,
+				"images/1017-point_yellow.png");
+		
 		return actions;
 	}
 
+	/*
+	 * Utility method to create color actions
+	 */
 	private ColorAction createColorAction(String colorName, Color color,
 			String iconFile) {
 		return new ColorAction(colorName, new ImageIcon(
@@ -163,59 +213,65 @@ public class TextPadFrame extends JFrame {
 				"Change text color to " + colorName, color);
 	}
 
+	/*
+	 * Creates the array of possible font actions
+	 */
 	private Action[] createFontNameActions() {
-		Action[] actions = new FontNameAction[3];
+		
+		// allocate the array
+		Action[] actions = new FontNameAction[5];
+		
+		// create the actions and store in the array
 		actions[0] = createFontNameAction("Arial",
 				"images/2080-triangle_blue.png");
-		actions[1] = createFontNameAction("Courier",
+		actions[1] = createFontNameAction("Calibri",
 				"images/2083-triangle_red.png");
-		actions[2] = createFontNameAction("Times New Roman",
+		actions[2] = createFontNameAction("Courier",
 				"images/2082-triangle_green.png");
+		actions[3] = createFontNameAction("Times New Roman",
+				"images/2084-triangle_yellow.png");
+		actions[4] = createFontNameAction("Veranda",
+				"images/2081-triangle_cyan.png");
+		
 		return actions;
 	}
 
+	
+	/*
+	 * Utility method to create font actions
+	 */
 	private FontNameAction createFontNameAction(String fontName, String iconFile) {
 		return new FontNameAction(fontName, new ImageIcon(
 				TextPadFrame.class.getResource(iconFile)), "Change font to "
 				+ fontName, fontName);
 	}
 
-	private abstract class MyAbstractAction extends AbstractAction {
 
-		public MyAbstractAction(String name) {
-			super(name);
-		}
-
-		public MyAbstractAction(String name, Icon icon) {
-			super(name, icon);
-		}
-
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			System.out.println("Action '" + getValue(Action.NAME)
-					+ "' selected.");
-			doActionPerformed(e);
-		}
-
-		public abstract void doActionPerformed(ActionEvent e);
-
-	}
-
-	private class ColorAction extends MyAbstractAction {
+	/*
+	 * Implements the color action.  Changes text area fore color.
+	 */
+	private class ColorAction extends AbstractAction {
+		
 		public ColorAction(String name, Icon icon, String tooltip, Color c) {
 			super(name, icon);
 			putValue(Action.SHORT_DESCRIPTION, tooltip);
 			putValue("Color", c);
 		}
 
+		
 		@Override
-		public void doActionPerformed(ActionEvent event) {
+		public void actionPerformed(ActionEvent event) {
+			
+			// set the foreground color of the text area
 			textArea.setForeground((Color) getValue("Color"));
 		}
 	}
 
-
-	private class FontNameAction extends MyAbstractAction {
+	/*
+	 * Implements the font name action.  Changes text area font.
+	 */
+	private class FontNameAction extends AbstractAction {
+		
 		public FontNameAction(String name, Icon icon, String tooltip,
 				String fontName) {
 			super(name, icon);
@@ -224,25 +280,42 @@ public class TextPadFrame extends JFrame {
 		}
 
 		@Override
-		public void doActionPerformed(ActionEvent event) {
+		public void actionPerformed(ActionEvent event) {
+			
+			// get the current font
 			Font currentFont = textArea.getFont();
+			
+			// create a new font w/ new font name
 			Font f = new Font((String) getValue("Font"), currentFont.getStyle(), currentFont.getSize());
+			
+			// set the new font
 			textArea.setFont(f);
 		}
 	}
 
-	private class FontSizeAction extends MyAbstractAction {
+	/*
+	 * Implements the font size action.  Changes text area font size.
+	 */
+	private class FontSizeAction extends AbstractAction {
+		
 		public FontSizeAction(String name, Icon icon, String tooltip) {
 			super(name, icon);
 			putValue(Action.SHORT_DESCRIPTION, tooltip);
 		}
 
 		@Override
-		public void doActionPerformed(ActionEvent event) {
+		public void actionPerformed(ActionEvent event) {
+			
+			// get the new font size
 			Integer fontSize = (Integer) fontsizeComboBox.getSelectedItem();
+			
+			// get the current font
 			Font currentFont = textArea.getFont();
-			Font f = new Font(currentFont.getFontName(),
-					currentFont.getStyle(), fontSize);
+			
+			// create a new font w/ new font name
+			Font f = new Font(currentFont.getFontName(), currentFont.getStyle(), fontSize);
+			
+			// set the new font
 			textArea.setFont(f);
 		}
 	}
