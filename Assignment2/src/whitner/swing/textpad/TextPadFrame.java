@@ -89,9 +89,11 @@ public class TextPadFrame extends JFrame {
 
 		// create the format menu
 		JMenu formatMenu = new JMenu("Format");
+		formatMenu.setMnemonic('F');
 
 		// create the color sub-menu
 		JMenu colorMenu = new JMenu("Color");
+		colorMenu.setMnemonic('C');
 		
 		// add each color action to the format menu
 		for (Action ca : colorActions) {
@@ -100,6 +102,7 @@ public class TextPadFrame extends JFrame {
 
 		// create the font sub-menu
 		JMenu fontMenu = new JMenu("Font");
+		fontMenu.setMnemonic('F');
 		
 		// add each font action to the font menu
 		for (Action fna : fontNameActions) {
@@ -108,6 +111,7 @@ public class TextPadFrame extends JFrame {
 
 		// create the help sub-menu
 		JMenu helpMenu = new JMenu("Help");
+		helpMenu.setMnemonic('H');
 		
 		// add the about action to the help menu
 		helpMenu.add(new AbstractAction("About") {
@@ -210,7 +214,7 @@ public class TextPadFrame extends JFrame {
 			String iconFile) {
 		return new ColorAction(colorName, new ImageIcon(
 				TextPadFrame.class.getResource(iconFile)),
-				"Change text color to " + colorName, color);
+				"Change text color to " + colorName, color, colorName.charAt(0));
 	}
 
 	/*
@@ -242,7 +246,7 @@ public class TextPadFrame extends JFrame {
 	private FontNameAction createFontNameAction(String fontName, String iconFile) {
 		return new FontNameAction(fontName, new ImageIcon(
 				TextPadFrame.class.getResource(iconFile)), "Change font to "
-				+ fontName, fontName);
+				+ fontName, fontName, fontName.charAt(0));
 	}
 
 	/*
@@ -250,10 +254,11 @@ public class TextPadFrame extends JFrame {
 	 */
 	private class ColorAction extends AbstractAction {
 		
-		public ColorAction(String name, Icon icon, String tooltip, Color c) {
+		public ColorAction(String name, Icon icon, String tooltip, Color c, char mnemonic) {
 			super(name, icon);
 			putValue(Action.SHORT_DESCRIPTION, tooltip);
 			putValue("Color", c);
+			putValue(Action.MNEMONIC_KEY, new Integer(mnemonic));
 		}
 
 		
@@ -271,10 +276,11 @@ public class TextPadFrame extends JFrame {
 	private class FontNameAction extends AbstractAction {
 		
 		public FontNameAction(String name, Icon icon, String tooltip,
-				String fontName) {
+				String fontName, char mnemonic) {
 			super(name, icon);
 			putValue(Action.SHORT_DESCRIPTION, tooltip);
 			putValue("Font", fontName);
+			putValue(Action.MNEMONIC_KEY, new Integer(mnemonic));
 		}
 
 		@Override
