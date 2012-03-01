@@ -235,7 +235,6 @@ public class TextPadFrame extends JFrame {
 		
 		return actions;
 	}
-
 	
 	/*
 	 * Utility method to create font actions
@@ -245,7 +244,6 @@ public class TextPadFrame extends JFrame {
 				TextPadFrame.class.getResource(iconFile)), "Change font to "
 				+ fontName, fontName);
 	}
-
 
 	/*
 	 * Implements the color action.  Changes text area fore color.
