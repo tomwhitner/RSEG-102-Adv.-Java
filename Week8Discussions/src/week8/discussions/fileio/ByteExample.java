@@ -23,12 +23,16 @@ public class ByteExample {
 			OutputStream out = new FileOutputStream(file);
 			// write the array to the file via the stream
 			out.write(outBytes);
+			// close the stream
+			out.close();
 			// create an input stream for the same file
 			InputStream in = new FileInputStream(file);
 			// allocate a byte array with space for the number of bytes in the stream
 			byte[] inBytes = new byte[in.available()];
 			// read the bytes
 			int bytesRead = in.read(inBytes);
+			// close the stream
+			in.close();
 			// verify that the bytes read is equal to length of both input and output arrays
 			assert (bytesRead == outBytes.length);
 			assert (bytesRead == inBytes.length);
