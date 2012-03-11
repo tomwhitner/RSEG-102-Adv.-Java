@@ -1,6 +1,5 @@
 package week8.discussions.names;
 
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
