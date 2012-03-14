@@ -24,30 +24,22 @@ class Connection implements Runnable {
 	private Socket socket = null;
 	private BufferedReader in = null;
 	private PrintWriter out = null;
-	private File fileDir = new File("files");
+	private File fileDir = new File("server");
 	private Map<String, Command> commands = new HashMap<String, Command>();
 	private boolean admin = false;
 	private TransferMode mode = TransferMode.ASCII;
-
-	private static final String CMD_GET = "GET";
-	private static final String CMD_PUT = "PUT";
-	private static final String CMD_ASCII = "ASCII";
-	private static final String CMD_BINARY = "BINARY";
-	private static final String CMD_BYE = "BYE";
-	private static final String CMD_KILL = "KILL";
-	private static final String CMD_UNKNOWN = "UNKNOWN";
 
 	public Connection(Socket socket) {
 
 		this.socket = socket;
 
-		commands.put(CMD_GET, new GetCommand());
-		commands.put(CMD_PUT, new PutCommand());
-		commands.put(CMD_ASCII, new AsciiCommand());
-		commands.put(CMD_BINARY, new BinaryCommand());
-		commands.put(CMD_BYE, new ByeCommand());
-		commands.put(CMD_KILL, new KillCommand());
-		commands.put(CMD_UNKNOWN, new UnknownCommand());
+		commands.put(Command.CMD_GET, new GetCommand());
+		commands.put(Command.CMD_PUT, new PutCommand());
+		commands.put(Command.CMD_ASCII, new AsciiCommand());
+		commands.put(Command.CMD_BINARY, new BinaryCommand());
+		commands.put(Command.CMD_BYE, new ByeCommand());
+		commands.put(Command.CMD_KILL, new KillCommand());
+		commands.put(Command.CMD_UNKNOWN, new UnknownCommand());
 
 	}
 
@@ -57,7 +49,6 @@ class Connection implements Runnable {
 		try {
 
 			in = new BufferedReader( new InputStreamReader(socket.getInputStream()));
-
 			out = new PrintWriter(socket.getOutputStream(), true /* autoFlush */);
 
 			out.println("Welcome to FTServer ...");
@@ -82,6 +73,15 @@ class Connection implements Runnable {
 
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			
+			if (socket != null) {
+				try {
+					socket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
@@ -124,13 +124,11 @@ class Connection implements Runnable {
 	private Command getCommand(String commandName) {
 		Command cmd = commands.get(commandName.toUpperCase());
 		if (cmd == null) {
-			cmd = commands.get(CMD_UNKNOWN);
+			cmd = commands.get(Command.CMD_UNKNOWN);
 		}
 		return cmd;
 	}
 	
-
-
 	class AsciiCommand implements Command {
 
 		@Override
