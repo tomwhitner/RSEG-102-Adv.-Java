@@ -17,9 +17,8 @@ public class TransferUtility {
         BufferedReader in = new BufferedReader(reader);
         BufferedWriter out = new BufferedWriter(writer);
         
-        int c;
-        while ((c = in.read()) != -1) {
-        	out.write(c);
+        while (in.ready()) {
+        	out.write(in.read());
         }
         
         out.flush();

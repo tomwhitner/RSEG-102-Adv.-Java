@@ -33,13 +33,13 @@ class Connection implements Runnable {
 
 		this.socket = socket;
 
-		commands.put(Command.CMD_GET, new GetCommand());
-		commands.put(Command.CMD_PUT, new PutCommand());
-		commands.put(Command.CMD_ASCII, new AsciiCommand());
-		commands.put(Command.CMD_BINARY, new BinaryCommand());
-		commands.put(Command.CMD_BYE, new ByeCommand());
-		commands.put(Command.CMD_KILL, new KillCommand());
-		commands.put(Command.CMD_UNKNOWN, new UnknownCommand());
+		commands.put(Command.GET, new GetCommand());
+		commands.put(Command.PUT, new PutCommand());
+		commands.put(Command.ASCII, new AsciiCommand());
+		commands.put(Command.BINARY, new BinaryCommand());
+		commands.put(Command.BYE, new ByeCommand());
+		commands.put(Command.KILL, new KillCommand());
+		commands.put(Command.UNKNOWN, new UnknownCommand());
 
 	}
 
@@ -60,6 +60,8 @@ class Connection implements Runnable {
 				String line;
 				
 				while (((line = in.readLine()) != null) && proceed) {
+					
+					System.out.println("Processing: " + line);
 
 					String[] lines = line.split(" ");
 
@@ -124,7 +126,7 @@ class Connection implements Runnable {
 	private Command getCommand(String commandName) {
 		Command cmd = commands.get(commandName.toUpperCase());
 		if (cmd == null) {
-			cmd = commands.get(Command.CMD_UNKNOWN);
+			cmd = commands.get(Command.UNKNOWN);
 		}
 		return cmd;
 	}
