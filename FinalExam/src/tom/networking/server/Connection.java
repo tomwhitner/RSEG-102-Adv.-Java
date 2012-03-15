@@ -17,11 +17,11 @@ import java.util.Map;
 
 import tom.networking.TransferMode;
 import tom.networking.TransferUtility;
-import tom.networking.Command;
 
 class Connection implements Runnable {
 	
 	private Socket socket = null;
+	private Socket dataSocket = null;
 	private BufferedReader in = null;
 	private PrintWriter out = null;
 	private File fileDir = new File("server");
@@ -33,11 +33,10 @@ class Connection implements Runnable {
 
 		this.socket = socket;
 
-		commands.put(Command.GET, new GetCommand());
-		commands.put(Command.PUT, new PutCommand());
-		commands.put(Command.ASCII, new AsciiCommand());
-		commands.put(Command.BINARY, new BinaryCommand());
-		commands.put(Command.BYE, new ByeCommand());
+		commands.put(Command.RETR, new RetrCommand());
+		commands.put(Command.STOR, new StorCommand());
+		commands.put(Command.TYPE, new TypeCommand());
+		commands.put(Command.QUIT, new QuitCommand());
 		commands.put(Command.KILL, new KillCommand());
 		commands.put(Command.UNKNOWN, new UnknownCommand());
 
@@ -131,26 +130,35 @@ class Connection implements Runnable {
 		return cmd;
 	}
 	
-	class AsciiCommand implements Command {
+	class TypeCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			out.println("Mode set to Ascii.");
-			mode = TransferMode.ASCII;
+
+			if (parameters.length != 2) {
+				out.println("Invalid number of parameters.");
+			} else {
+
+				String type = parameters[1];
+				
+				if (type.toUpperCase().equals("A")) {
+					out.println("Mode set to Ascii.");
+					mode = TransferMode.ASCII;
+				} else {
+
+					if (type.toUpperCase().equals("B")) {
+						out.println("Mode set to Binary.");
+						mode = TransferMode.BINARY;
+					} else {
+
+						out.println("Invalid mode specified.");
+					}
+				}
+			}
 			return true;
 		}
 	}
-
-	class BinaryCommand implements Command {
-
-		@Override
-		public boolean execute(String[] parameters) {
-			out.println("Mode set to Binary.");
-			mode = TransferMode.BINARY;
-			return true;
-		}
-	}
-
+	
 	class UnknownCommand implements Command {
 
 		@Override
@@ -160,7 +168,7 @@ class Connection implements Runnable {
 		}
 	}
 
-	class ByeCommand implements Command {
+	class QuitCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -195,8 +203,19 @@ class Connection implements Runnable {
 			return true;
 		}
 	}
+	
+	class PasvCommand implements Command {
 
-	class GetCommand implements Command {
+		@Override
+		public boolean execute(String[] parameters) {
+			
+			// prepare to accept another connection for data from the client on a different port.
+			return true;
+		}
+	}
+
+
+	class RetrCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -233,7 +252,7 @@ class Connection implements Runnable {
 
 	}
 
-	class PutCommand implements Command {
+	class StorCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
