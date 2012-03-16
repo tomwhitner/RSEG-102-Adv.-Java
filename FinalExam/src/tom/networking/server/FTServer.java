@@ -11,12 +11,15 @@ public class FTServer {
 	public static void main(String[] args) {
 
 		try {
-			// obtain the port
-			ServerSocket s = new ServerSocket(CMD_PORT);
+			// obtain the command port
+			ServerSocket cmd = new ServerSocket(CMD_PORT);
+			
+			// obtain the data port - used for file transfer
+			ServerSocket data = new ServerSocket(DATA_PORT);
 
 			while (true) {
 
-				new Thread(new Connection(s.accept())).start();
+				new Thread(new Connection(cmd.accept(), data)).start();
 
 			}
 

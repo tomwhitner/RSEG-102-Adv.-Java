@@ -17,11 +17,16 @@ public class TransferUtility {
         BufferedReader in = new BufferedReader(reader);
         BufferedWriter out = new BufferedWriter(writer);
         
-        while (in.ready()) {
-        	out.write(in.read());
+		int c;
+
+        while ((c = in.read()) != -1) {
+            out.write(c);
         }
-        
+	
         out.flush();
+        
+        in.close();
+        out.close();
 	
 	}
 	
@@ -31,12 +36,15 @@ public class TransferUtility {
 		BufferedOutputStream out = new BufferedOutputStream(outStream);
 
 		int c;
-
+		int count = 0;
         while ((c = in.read()) != -1) {
+        	count++;
             out.write(c);
         }
 		
         out.flush();
     	
+        in.close();
+        out.close();
 	}
 }

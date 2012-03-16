@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,22 +19,24 @@ import java.util.Map;
 import tom.networking.TransferMode;
 import tom.networking.TransferUtility;
 
-
 class Connection implements Runnable {
-	
-	private Socket socket = null;
+
+	private final Socket socket;
+	private final ServerSocket dataPort;
 	private Socket dataSocket = null;
 	private BufferedReader in = null;
 	private PrintWriter out = null;
-	private File fileDir = new File("server");
-	private Map<String, Command> commands = new HashMap<String, Command>();
+	private final File fileDir = new File("server");
+	private final Map<String, Command> commands = new HashMap<String, Command>();
 	private boolean admin = false;
 	private TransferMode mode = TransferMode.ASCII;
 
-	public Connection(Socket socket) {
+	public Connection(Socket socket, ServerSocket data) {
 
 		this.socket = socket;
+		this.dataPort = data;
 
+		commands.put(Command.PASV, new PasvCommand());
 		commands.put(Command.RETR, new RetrCommand());
 		commands.put(Command.STOR, new StorCommand());
 		commands.put(Command.TYPE, new TypeCommand());
@@ -50,7 +53,8 @@ class Connection implements Runnable {
 
 		try {
 
-			in = new BufferedReader( new InputStreamReader(socket.getInputStream()));
+			in = new BufferedReader(new InputStreamReader(
+					socket.getInputStream()));
 			out = new PrintWriter(socket.getOutputStream(), true /* autoFlush */);
 
 			out.println("Welcome to FTServer ...");
@@ -58,9 +62,9 @@ class Connection implements Runnable {
 			boolean proceed = true;
 
 			String line;
-			
+
 			while (((line = in.readLine()) != null) && proceed) {
-				
+
 				System.out.println("Processing: " + line);
 
 				String[] lines = line.split(" ");
@@ -72,7 +76,7 @@ class Connection implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-			
+
 			if (socket != null) {
 				try {
 					socket.close();
@@ -84,30 +88,31 @@ class Connection implements Runnable {
 	}
 
 	private void outputToClient(int code, String message, boolean last) {
-		
+
 		assert (code >= 100) && (code <= 599) : "Invalid code";
-		
+
 		StringBuilder sb = new StringBuilder(message.length() + 1);
-		
+
 		sb.append(code);
 		sb.append(last ? " " : "-");
 		sb.append(message);
 		out.println(sb.toString());
 	}
-	
+
 	private boolean parameterCountIsOK(String[] parameters, int expectedCount) {
-		
-	
+
 		if (parameters.length < expectedCount) {
-			outputToClient(400, "Too few parameters specified. " + expectedCount + " were expected.", true);
+			outputToClient(400, "Too few parameters specified. "
+					+ (expectedCount - 1) + " were expected.", true);
 			return false;
 		}
 		if (parameters.length > expectedCount) {
-			outputToClient(400, "Too many parameters specified. " + expectedCount + " were expected.", true);
+			outputToClient(400, "Too many parameters specified. "
+					+ (expectedCount - 1) + " were expected.", true);
 			return false;
 		}
 		return true;
-		
+
 	}
 
 	private boolean authenticate(String usr, String pwd) {
@@ -128,16 +133,16 @@ class Connection implements Runnable {
 		}
 		return cmd;
 	}
-	
+
 	class TypeCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
 
-			if (parameterCountIsOK(parameters,2)) {
+			if (parameterCountIsOK(parameters, 2)) {
 
 				String type = parameters[1];
-				
+
 				if (type.toUpperCase().equals("A")) {
 					outputToClient(200, "Mode set to Ascii.", true);
 					mode = TransferMode.ASCII;
@@ -147,32 +152,36 @@ class Connection implements Runnable {
 						outputToClient(200, "Mode set to Binary.", true);
 						mode = TransferMode.BINARY;
 					} else {
-						outputToClient(400, "Invalid mode specified.  'A' or 'B' are accepted.", true);
+						outputToClient(
+								400,
+								"Invalid mode specified.  'A' or 'B' are accepted.",
+								true);
 					}
 				}
 			}
 			return true;
 		}
 	}
-	
+
 	private String user = null;
 	private static final String USER_ANONYMOUS = "ANONYMOUS";
 	private static final String USER_ADMIN = "ADMIN";
-	
+
 	class UserCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			
-			if (parameterCountIsOK(parameters,2)) {
+
+			if (parameterCountIsOK(parameters, 2)) {
 				user = parameters[1];
 				outputToClient(200, "User: " + user + " - accepted.", false);
 				if (user.toUpperCase().equals(USER_ANONYMOUS)) {
 					outputToClient(200, "Send email for password.", true);
-				} else {				
-					outputToClient(200, "Password required for user " + user, true);
+				} else {
+					outputToClient(200, "Password required for user " + user,
+							true);
 				}
-				
+
 			}
 			return true;
 		}
@@ -182,21 +191,21 @@ class Connection implements Runnable {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			
-			if (parameterCountIsOK(parameters,2)) {
+
+			if (parameterCountIsOK(parameters, 2)) {
 				String pwd = parameters[1];
 				if (authenticate(user, pwd)) {
 					outputToClient(200, "User: " + user + " - logged in.", true);
 					admin = user.toUpperCase().equals(USER_ADMIN);
 				} else {
-					outputToClient(400, "User: " + user + " - Not authorized.", true);
+					outputToClient(400, "User: " + user + " - Not authorized.",
+							true);
 				}
 			}
 			return true;
 		}
 	}
 
-	
 	class UnknownCommand implements Command {
 
 		@Override
@@ -241,37 +250,65 @@ class Connection implements Runnable {
 			return true;
 		}
 	}
-	
+
+
 	class PasvCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			
-			// prepare to accept another connection for data from the client on a different port.
+
+			try {
+				// prepare to accept another connection for data from the client
+				outputToClient(200, "Ready to accept data connection.", true);
+
+				// wait for client connection
+				dataSocket = dataPort.accept();
+
+			} catch (IOException e) {
+
+				e.printStackTrace();
+			}
+
 			return true;
 		}
 	}
-
 
 	class RetrCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
 
-			if (parameterCountIsOK(parameters,2)) {
+			if (dataSocket == null) {
+				outputToClient(400, "Data connection not established.", true);
+			}
 
-				File file = new File(fileDir, parameters[1]);
+			if (parameterCountIsOK(parameters, 2)) {
 
 				try {
-					
+
+					String fileName = parameters[1];
+					File file = new File(fileDir, fileName);
+
+					outputToClient(200, "Begin receiving.", true);
+
 					switch (mode) {
-						case ASCII:
-							TransferUtility.transferText(new FileReader(file), new OutputStreamWriter(socket.getOutputStream()));
-							break;
-						case BINARY:
-							TransferUtility.transferBinary(new FileInputStream(file), socket.getOutputStream());
-							break;
+					case ASCII:
+						TransferUtility.transferText(
+								new FileReader(file),
+								new OutputStreamWriter(dataSocket
+										.getOutputStream()));
+						break;
+					case BINARY:
+						TransferUtility.transferBinary(
+								new FileInputStream(file),
+								dataSocket.getOutputStream());
+						break;
 					}
+
+					dataSocket.close();
+					dataSocket = null;
+
+					outputToClient(200, "File sent.", true);
 
 				} catch (FileNotFoundException e) {
 					outputToClient(400, "File does not exist.", true);
@@ -280,7 +317,7 @@ class Connection implements Runnable {
 					e.printStackTrace();
 				}
 
-			} 
+			}
 			return true;
 
 		}
@@ -291,22 +328,31 @@ class Connection implements Runnable {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			
-			if (parameterCountIsOK(parameters,2)) {
 
-				File file = new File(fileDir, parameters[1]);
+			if (dataSocket == null) {
+				outputToClient(400, "Data connection not established.", true);
+			}
+
+			if (parameterCountIsOK(parameters, 2)) {
 
 				try {
 
+					String fileName = parameters[1];
+					File file = new File(fileDir, fileName);
+
+					outputToClient(100, "Begin sending.", true);
+
 					switch (mode) {
 					case ASCII:
-						TransferUtility.transferText(new InputStreamReader(socket.getInputStream()), new FileWriter(file));
+						TransferUtility.transferText(new InputStreamReader(dataSocket.getInputStream()), new FileWriter(file));
 						break;
 					case BINARY:
-						TransferUtility.transferBinary(socket.getInputStream(), new FileOutputStream(file));
+						TransferUtility.transferBinary(dataSocket.getInputStream(), new FileOutputStream(file));
 						break;
-				}
+					}
 
+					outputToClient(200, "File received.", true);
+					
 				} catch (FileNotFoundException e) {
 					outputToClient(400, "File does not exist.", true);
 				} catch (IOException e) {
