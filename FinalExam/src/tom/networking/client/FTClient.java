@@ -23,9 +23,12 @@ public class FTClient {
 	private File fileDir = new File("client");
 	private Map<String, Command> commands = new HashMap<String, Command>();
 	private TransferMode mode = TransferMode.ASCII;
-	private BufferedReader in = null;
-	private PrintWriter out = null;
-	
+	private BufferedReader screenIn = null;
+	private PrintWriter screenOut = null;
+
+	private Scanner serverIn = null;
+	private PrintWriter serverOut = null;
+
 	private Socket socket = null;
 	
 	private static final int PORT = 8189;
@@ -36,8 +39,8 @@ public class FTClient {
 		
 	void run() {
 
-		in = new BufferedReader(new InputStreamReader(System.in));
-		out = new PrintWriter(System.out, true /* autoFlush */);
+		screenIn = new BufferedReader(new InputStreamReader(System.in));
+		screenOut = new PrintWriter(System.out, true /* autoFlush */);
 		
 		commands.put(Command.UNKNOWN, new UnknownCommand());
 		commands.put(Command.GET, new GetCommand());
@@ -50,9 +53,9 @@ public class FTClient {
 
 		try {
 			
-			out.println("Welcome to FTClient...");
+			screenOut.println("Welcome to FTClient...");
 			
-			while (((line = in.readLine()) != null) && proceed) {
+			while (((line = screenIn.readLine()) != null) && proceed) {
 
 				String[] lines = line.split(" ");
 
@@ -67,6 +70,24 @@ public class FTClient {
 		}
 
 	}
+	
+	private int sendCommandToServer(String command, String ... parameters) {
+		
+		String line = command;
+		for (String p : parameters) {
+			line = line + " " + p;
+		}
+		serverOut.println(line);
+		
+		String ret;
+		do {
+			ret = serverIn.nextLine();
+			screenOut.println(ret);
+		} while (ret.charAt(3) != ' ');
+		
+		int result = Integer.parseInt(ret.substring(0, 3));
+		return result;
+	}
 
 	private Command getCommand(String commandName) {
 		Command cmd = commands.get(commandName.toUpperCase());
@@ -80,7 +101,7 @@ public class FTClient {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			out.println("Unknown command: " + parameters[0]);
+			screenOut.println("Unknown command: " + parameters[0]);
 			return true;
 		}
 	}
@@ -98,30 +119,33 @@ public class FTClient {
 					socket = new Socket(host, PORT);
 					socket.setSoTimeout(5000);
 					
-					Scanner s = new Scanner(socket.getInputStream());
-					PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
+					serverIn = new Scanner(socket.getInputStream());
+					serverOut = new PrintWriter(socket.getOutputStream(), true);
 					
 					socket.setSoTimeout(60000);
 
 					// welcome
-					out.println(s.nextLine());
+					screenOut.println(serverIn.nextLine());
 					
-					// user 
-					out.println(s.nextLine());
-					pw.println(in.readLine());
-					pw.flush();
+					screenOut.println("User:");
+					String user = screenIn.readLine();
+					sendCommandToServer(tom.networking.server.Command.USER, user);
 					
-					// pwd
-					out.println(s.nextLine());
-					pw.println(in.readLine());
-
-					out.println(s.nextLine());
-					out.println("Connected to " + host);
+					// password 
+					screenOut.println("Password:");
+					String pwd = screenIn.readLine();
+					int result = sendCommandToServer(tom.networking.server.Command.PASS, pwd);
+					
+					if (result == 200) {
+						screenOut.println("Connected to " + host);
+					} else {
+						screenOut.println("Failed to connect to " + host);
+					}
 					
 				} catch (UnknownHostException e) {
-					out.println("Unknown host: " + host);
+					screenOut.println("Unknown host: " + host);
 				} catch (ConnectException ex) {
-					out.println("Connection to " + host + " refused.ope");
+					screenOut.println("Connection to " + host + " refused");
 				}
 				catch (IOException e) {
 
@@ -129,7 +153,7 @@ public class FTClient {
 				}
 			
 			} else {
-				out.println("Incorrect number of command arguments specified.");
+				screenOut.println("Incorrect number of command arguments specified.");
 			}
 
 			return true;
@@ -194,14 +218,14 @@ public class FTClient {
 
 				} catch (FileNotFoundException e) {
 
-					out.println("File does not exist.");
+					screenOut.println("File does not exist.");
 				} catch (IOException e) {
 
 					e.printStackTrace();
 				}
 
 			} else {
-				out.println("Incorrect number of command arguments specified.");
+				screenOut.println("Incorrect number of command arguments specified.");
 			}
 			return true;
 

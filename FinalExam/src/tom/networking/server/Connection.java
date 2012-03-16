@@ -18,6 +18,7 @@ import java.util.Map;
 import tom.networking.TransferMode;
 import tom.networking.TransferUtility;
 
+
 class Connection implements Runnable {
 	
 	private Socket socket = null;
@@ -38,6 +39,8 @@ class Connection implements Runnable {
 		commands.put(Command.TYPE, new TypeCommand());
 		commands.put(Command.QUIT, new QuitCommand());
 		commands.put(Command.KILL, new KillCommand());
+		commands.put(Command.USER, new UserCommand());
+		commands.put(Command.PASS, new PassCommand());
 		commands.put(Command.UNKNOWN, new UnknownCommand());
 
 	}
@@ -52,24 +55,18 @@ class Connection implements Runnable {
 
 			out.println("Welcome to FTServer ...");
 
-			if (login()) {
+			boolean proceed = true;
 
-				boolean proceed = true;
-
-				String line;
+			String line;
+			
+			while (((line = in.readLine()) != null) && proceed) {
 				
-				while (((line = in.readLine()) != null) && proceed) {
-					
-					System.out.println("Processing: " + line);
+				System.out.println("Processing: " + line);
 
-					String[] lines = line.split(" ");
+				String[] lines = line.split(" ");
 
-					Command cmd = getCommand(lines[0]);
-					proceed = cmd.execute(lines);
-				}
-			} else {
-
-				socket.close();
+				Command cmd = getCommand(lines[0]);
+				proceed = cmd.execute(lines);
 			}
 
 		} catch (IOException e) {
@@ -86,37 +83,39 @@ class Connection implements Runnable {
 		}
 	}
 
-	private boolean login() {
-
-		try {
-		out.println("User (required): ");
-		String usr = in.readLine();
-
-		out.println("Password (required): ");
-		String pwd = in.readLine();
-
-
-		if (authenticate(usr, pwd)) {
-			out.println("User " + usr + " logged in.");
-			admin = usr.equals("Admin");
-			return true;
-		} else {
-			out.println("User not authorized.");
-		}
+	private void outputToClient(int code, String message, boolean last) {
 		
-		} catch (IOException e) {
-			
-			e.printStackTrace();
+		assert (code >= 100) && (code <= 599) : "Invalid code";
+		
+		StringBuilder sb = new StringBuilder(message.length() + 1);
+		
+		sb.append(code);
+		sb.append(last ? " " : "-");
+		sb.append(message);
+		out.println(sb.toString());
+	}
+	
+	private boolean parameterCountIsOK(String[] parameters, int expectedCount) {
+		
+	
+		if (parameters.length < expectedCount) {
+			outputToClient(400, "Too few parameters specified. " + expectedCount + " were expected.", true);
+			return false;
 		}
-		return false;
+		if (parameters.length > expectedCount) {
+			outputToClient(400, "Too many parameters specified. " + expectedCount + " were expected.", true);
+			return false;
+		}
+		return true;
+		
 	}
 
 	private boolean authenticate(String usr, String pwd) {
 
-		if (usr.equals("Guest") && pwd.equals("guest"))
+		if (usr.toUpperCase().equals(USER_ANONYMOUS))
 			return true;
 
-		if (usr.equals("Admin") && pwd.equals("admin"))
+		if (usr.toUpperCase().equals(USER_ADMIN) && pwd.equals("admin"))
 			return true;
 
 		return false;
@@ -135,23 +134,20 @@ class Connection implements Runnable {
 		@Override
 		public boolean execute(String[] parameters) {
 
-			if (parameters.length != 2) {
-				out.println("Invalid number of parameters.");
-			} else {
+			if (parameterCountIsOK(parameters,2)) {
 
 				String type = parameters[1];
 				
 				if (type.toUpperCase().equals("A")) {
-					out.println("Mode set to Ascii.");
+					outputToClient(200, "Mode set to Ascii.", true);
 					mode = TransferMode.ASCII;
 				} else {
 
 					if (type.toUpperCase().equals("B")) {
-						out.println("Mode set to Binary.");
+						outputToClient(200, "Mode set to Binary.", true);
 						mode = TransferMode.BINARY;
 					} else {
-
-						out.println("Invalid mode specified.");
+						outputToClient(400, "Invalid mode specified.  'A' or 'B' are accepted.", true);
 					}
 				}
 			}
@@ -159,11 +155,53 @@ class Connection implements Runnable {
 		}
 	}
 	
+	private String user = null;
+	private static final String USER_ANONYMOUS = "ANONYMOUS";
+	private static final String USER_ADMIN = "ADMIN";
+	
+	class UserCommand implements Command {
+
+		@Override
+		public boolean execute(String[] parameters) {
+			
+			if (parameterCountIsOK(parameters,2)) {
+				user = parameters[1];
+				outputToClient(200, "User: " + user + " - accepted.", false);
+				if (user.toUpperCase().equals(USER_ANONYMOUS)) {
+					outputToClient(200, "Send email for password.", true);
+				} else {				
+					outputToClient(200, "Password required for user " + user, true);
+				}
+				
+			}
+			return true;
+		}
+	}
+
+	class PassCommand implements Command {
+
+		@Override
+		public boolean execute(String[] parameters) {
+			
+			if (parameterCountIsOK(parameters,2)) {
+				String pwd = parameters[1];
+				if (authenticate(user, pwd)) {
+					outputToClient(200, "User: " + user + " - logged in.", true);
+					admin = user.toUpperCase().equals(USER_ADMIN);
+				} else {
+					outputToClient(400, "User: " + user + " - Not authorized.", true);
+				}
+			}
+			return true;
+		}
+	}
+
+	
 	class UnknownCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			out.println("Unknown command: " + parameters[0]);
+			outputToClient(400, "Unknown command: " + parameters[0], true);
 			return true;
 		}
 	}
@@ -173,7 +211,7 @@ class Connection implements Runnable {
 		@Override
 		public boolean execute(String[] parameters) {
 			try {
-				out.println("Goodbye!");
+				outputToClient(200, "Goodbye!", true);
 				socket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -189,7 +227,7 @@ class Connection implements Runnable {
 
 			if (admin) {
 				try {
-					out.println("Terminating Server.  Goodbye!");
+					outputToClient(200, "Terminating Server.  Goodbye!", true);
 					socket.close();
 					System.exit(0);
 					return false;
@@ -198,7 +236,7 @@ class Connection implements Runnable {
 					e.printStackTrace();
 				}
 			} else {
-				out.println("User not authorized to KILL server.");
+				outputToClient(400, "User not authorized to KILL server.", true);
 			}
 			return true;
 		}
@@ -220,7 +258,7 @@ class Connection implements Runnable {
 		@Override
 		public boolean execute(String[] parameters) {
 
-			if (parameters.length == 2) {
+			if (parameterCountIsOK(parameters,2)) {
 
 				File file = new File(fileDir, parameters[1]);
 
@@ -236,16 +274,13 @@ class Connection implements Runnable {
 					}
 
 				} catch (FileNotFoundException e) {
-
-					out.println("File does not exist.");
+					outputToClient(400, "File does not exist.", true);
 				} catch (IOException e) {
 
 					e.printStackTrace();
 				}
 
-			} else {
-				out.println("Incorrect number of command arguments specified.");
-			}
+			} 
 			return true;
 
 		}
@@ -257,7 +292,7 @@ class Connection implements Runnable {
 		@Override
 		public boolean execute(String[] parameters) {
 			
-			if (parameters.length == 2) {
+			if (parameterCountIsOK(parameters,2)) {
 
 				File file = new File(fileDir, parameters[1]);
 
@@ -273,13 +308,11 @@ class Connection implements Runnable {
 				}
 
 				} catch (FileNotFoundException e) {
-					e.printStackTrace();
+					outputToClient(400, "File does not exist.", true);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 
-			} else {
-				out.println("Incorrect number of command arguments specified.");
 			}
 			return true;
 
