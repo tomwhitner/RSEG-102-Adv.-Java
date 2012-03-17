@@ -21,19 +21,24 @@ import tom.networking.TransferUtility;
 
 class Connection implements Runnable {
 
-	private final Socket socket;
+	private final File fileDir = new File("server");
+	private final Map<String, Command> commands = new HashMap<String, Command>();
+
+	private final Socket commandSocket;
 	private final ServerSocket dataPort;
 	private Socket dataSocket = null;
 	private BufferedReader in = null;
 	private PrintWriter out = null;
-	private final File fileDir = new File("server");
-	private final Map<String, Command> commands = new HashMap<String, Command>();
+	
+	private static final String USER_ANONYMOUS = "ANONYMOUS";
+	private static final String USER_ADMIN = "ADMIN";
+	private String user = null;
 	private boolean admin = false;
 	private TransferMode mode = TransferMode.ASCII;
 
 	public Connection(Socket socket, ServerSocket data) {
 
-		this.socket = socket;
+		this.commandSocket = socket;
 		this.dataPort = data;
 
 		commands.put(Command.PASV, new PasvCommand());
@@ -47,71 +52,163 @@ class Connection implements Runnable {
 
 	}
 
+	/*
+	 * This is the main method for the connection
+	 * It loops, accepting and processing commands from the client.
+	 */
 	@Override
 	public void run() {
 
 		try {
 
-			in = new BufferedReader(new InputStreamReader(
-					socket.getInputStream()));
-			out = new PrintWriter(socket.getOutputStream(), true /* autoFlush */);
+			in = new BufferedReader(new InputStreamReader(commandSocket.getInputStream()));
+			out = new PrintWriter(commandSocket.getOutputStream(), true /* autoFlush */);
 
-			outputToClient(100, "FTServer Ready.", true);
+			outputToClient(Result.INPROGRESS, "FTServer Ready.", true);
 
 			boolean proceed = true;
 
-			String line;
-
-			while (((line = in.readLine()) != null) && proceed) {
-
+			// stop when command indicates loop should exit (Quit, Kill)
+			while (proceed) {
+				// read a line from client input
+				String line = in.readLine();
+				
 				System.out.println("Processing: " + line);
 
-				String[] lines = line.split(" ");
+				// split it into tokens
+				String[] parameters = line.split(" ");
+				
+				// first token is the command name
+				String commandName = parameters[0];
 
-				Command cmd = getCommand(lines[0]);
-				proceed = cmd.execute(lines);
+				// retrieve the command object by name
+				Command cmd = getCommand(commandName);
+				
+				// execute the command
+				proceed = cmd.execute(parameters);
 			}
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-
-			if (socket != null) {
+			// close all resources
+			close();
+		}
+	}
+	
+	/* 
+	 * Makes sure all resources are closed
+	 */
+	void close() {
+		
+		// close the client input stream if necessary
+		if (in != null) {
+			try {
+				in.close();
+			} catch (IOException e) {
+				// Not much can/should be done here.  Exiting anyway.
+				e.printStackTrace();
+			}
+			in = null;
+		}
+		
+		// close the client output stream if necessary
+		if (out != null) {
+			out.close();
+			out = null;
+		}
+		
+		// close the command socket if necessary
+		if (commandSocket != null) {
+			if (!commandSocket.isClosed()) {
 				try {
-					socket.close();
+					commandSocket.close();
 				} catch (IOException e) {
+					// Not much can/should be done here.  Exiting anyway.
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		// close the data socket if necessary
+		if (dataSocket != null) {
+			if (!dataSocket.isClosed()) {
+				try {
+					dataSocket.close();
+				} catch (IOException e) {
+					// Not much can/should be done here.  Exiting anyway.
 					e.printStackTrace();
 				}
 			}
 		}
 	}
 
+	/*
+	 * Send well-formatted message to client
+	 * This includes codes that enable the client to determine success or failure
+	 */
 	private void outputToClient(int code, String message, boolean last) {
 
+		// sanity check that no invalid codes are sent to client
 		assert (code >= 100) && (code <= 599) : "Invalid code";
 
+		// construct the message
 		StringBuilder sb = new StringBuilder(message.length() + 1);
-
 		sb.append(code);
 		sb.append(last ? " " : "-");
 		sb.append(message);
+		
+		// send the message to the client
 		out.println(sb.toString());
 	}
 
-	private boolean parameterCountIsOK(String[] parameters, int expectedCount) {
+	/*
+	 * Verifies the expected number of parameters are present.
+	 * Reports error to client if not.
+	 * NOTE: Command is first element in parameters[], but is not counted
+	 */
+	private boolean parameterCountIsOK(String[] parameters, int expCount) {
+		
+		int paramCount = parameters.length - 1;
+		
+		StringBuilder msg = null;
 
-		if (parameters.length < expectedCount) {
-			outputToClient(Result.FAILURE, "Too few parameters specified. "
-					+ (expectedCount - 1) + " were expected.", true);
+		if (paramCount < expCount) {
+			msg = new StringBuilder("Too few parameters were specified.");
+		}
+		
+		if (paramCount > expCount) {
+			msg = new StringBuilder("Too many parameters were specified.");
+		}
+		
+		if (msg != null) {
+			msg.append("  ");
+			msg.append(expCount);
+			msg.append(" parameter");
+			if (expCount != 1) {
+				msg.append("s were");
+			} else {
+				msg.append(" was");
+			}
+			msg.append(" expected.");
+			
+			outputToClient(Result.FAILURE, msg.toString(), true);
+			
 			return false;
 		}
-		if (parameters.length > expectedCount) {
-			outputToClient(Result.FAILURE, "Too many parameters specified. "
-					+ (expectedCount - 1) + " were expected.", true);
-			return false;
-		}
+
 		return true;
+	}
 
+	/*
+	 * Get the specified command object from the map
+	 */
+	private Command getCommand(String commandName) {
+		Command cmd = commands.get(commandName.toUpperCase());
+		if (cmd == null) {
+			cmd = commands.get(new UnknownCommand());
+		}
+		return cmd;
 	}
 
 	private boolean authenticate(String usr, String pwd) {
@@ -125,20 +222,12 @@ class Connection implements Runnable {
 		return false;
 	}
 
-	private Command getCommand(String commandName) {
-		Command cmd = commands.get(commandName.toUpperCase());
-		if (cmd == null) {
-			cmd = commands.get(new UnknownCommand());
-		}
-		return cmd;
-	}
-
-	class TypeCommand implements Command {
+	private class TypeCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
 
-			if (parameterCountIsOK(parameters, 2)) {
+			if (parameterCountIsOK(parameters, 1)) {
 
 				String type = parameters[1];
 
@@ -162,16 +251,12 @@ class Connection implements Runnable {
 		}
 	}
 
-	private String user = null;
-	private static final String USER_ANONYMOUS = "ANONYMOUS";
-	private static final String USER_ADMIN = "ADMIN";
-
-	class UserCommand implements Command {
+	private class UserCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
 
-			if (parameterCountIsOK(parameters, 2)) {
+			if (parameterCountIsOK(parameters, 1)) {
 				user = parameters[1];
 				outputToClient(Result.SUCCESS, "User: " + user + " - accepted.", false);
 				if (user.toUpperCase().equals(USER_ANONYMOUS)) {
@@ -186,12 +271,12 @@ class Connection implements Runnable {
 		}
 	}
 
-	class PassCommand implements Command {
+	private class PassCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
 
-			if (parameterCountIsOK(parameters, 2)) {
+			if (parameterCountIsOK(parameters, 1)) {
 				String pwd = parameters[1];
 				if (authenticate(user, pwd)) {
 					outputToClient(Result.SUCCESS, "User: " + user + " - logged in.", true);
@@ -205,7 +290,7 @@ class Connection implements Runnable {
 		}
 	}
 
-	class UnknownCommand implements Command {
+	private class UnknownCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -214,13 +299,13 @@ class Connection implements Runnable {
 		}
 	}
 
-	class QuitCommand implements Command {
+	private class QuitCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
 			try {
 				outputToClient(Result.SUCCESS, "Goodbye!", true);
-				socket.close();
+				commandSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -228,7 +313,7 @@ class Connection implements Runnable {
 		}
 	}
 
-	class KillCommand implements Command {
+	private class KillCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -236,7 +321,7 @@ class Connection implements Runnable {
 			if (admin) {
 				try {
 					outputToClient(Result.SUCCESS, "Terminating Server.  Goodbye!", true);
-					socket.close();
+					commandSocket.close();
 					System.exit(0);
 					return false;
 
@@ -251,7 +336,7 @@ class Connection implements Runnable {
 	}
 
 
-	class PasvCommand implements Command {
+	private class PasvCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -272,7 +357,7 @@ class Connection implements Runnable {
 		}
 	}
 
-	class RetrCommand implements Command {
+	private class RetrCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -281,14 +366,14 @@ class Connection implements Runnable {
 				outputToClient(Result.FAILURE, "Data connection not established.", true);
 			}
 
-			if (parameterCountIsOK(parameters, 2)) {
+			if (parameterCountIsOK(parameters, 1)) {
 
 				try {
 
 					String fileName = parameters[1];
 					File file = new File(fileDir, fileName);
 
-					outputToClient(Result.SUCCESS, "Begin receiving.", true);
+					outputToClient(Result.INPROGRESS, "Begin receiving.", true);
 
 					switch (mode) {
 					case ASCII:
@@ -323,7 +408,7 @@ class Connection implements Runnable {
 
 	}
 
-	class StorCommand implements Command {
+	private class StorCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -332,14 +417,14 @@ class Connection implements Runnable {
 				outputToClient(Result.FAILURE, "Data connection not established.", true);
 			}
 
-			if (parameterCountIsOK(parameters, 2)) {
+			if (parameterCountIsOK(parameters, 1)) {
 
 				try {
 
 					String fileName = parameters[1];
 					File file = new File(fileDir, fileName);
 
-					outputToClient(100, "Begin sending.", true);
+					outputToClient(Result.INPROGRESS, "Begin sending.", true);
 
 					switch (mode) {
 					case ASCII:

@@ -81,7 +81,8 @@ public class FTClient {
 	
 			boolean proceed = true;
 
-			do {
+			// stop when command indicates loop should exit (Quit)
+			while (proceed) {
 				// read a line from user input
 				String line = screenIn.readLine();
 
@@ -97,8 +98,8 @@ public class FTClient {
 				// execute the command
 				proceed = cmd.execute(parameters);
 				
-				// stop when command indicates loop should exit (Quit)
-			} while (proceed);
+				
+			} 
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -143,7 +144,7 @@ public class FTClient {
 	}
 
 	/*
-	 * Get the specified command object form the map
+	 * Get the specified command object from the map
 	 */
 	private Command getCommand(String commandName) {
 

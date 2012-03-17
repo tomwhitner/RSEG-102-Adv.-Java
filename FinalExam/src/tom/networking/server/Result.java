@@ -2,6 +2,7 @@ package tom.networking.server;
 
 public class Result {
 	
+	public static final int INPROGRESS = 100;
 	public static final int SUCCESS = 200;
 	public static final int FAILURE = 400;
 	
@@ -12,7 +13,7 @@ public class Result {
 	}
 	
 	public boolean succeeded () {
-		return result == SUCCESS;
+		return ((result == SUCCESS) || (result == INPROGRESS));
 	}
 	
 	public boolean failed () {
