@@ -20,6 +20,7 @@ import java.util.Scanner;
 
 import tom.networking.TransferMode;
 import tom.networking.TransferUtility;
+import tom.networking.server.Result;
 
 public class FTClient {
 
@@ -105,7 +106,6 @@ public class FTClient {
 			// close all resources
 			close();
 		}
-
 	}
 	
 	/* 
@@ -161,7 +161,7 @@ public class FTClient {
 	/*
 	 * Sends a command to the server and parses the response code
 	 */
-	private int sendCommandToServer(String command, String... parameters) {
+	private Result sendCommandToServer(String command, String... parameters) {
 
 		// assemble the command line with parameters
 		String cmdLine = command;
@@ -179,7 +179,7 @@ public class FTClient {
 	/*
 	 * Waits for, parses, and echos server responses
 	 */
-	private int waitForServer() {
+	private Result waitForServer() {
 		
 		// output each result line from the server
 		String restultLine;
@@ -191,13 +191,13 @@ public class FTClient {
 		// parse the result code from the final result line
 		int resultCode = Integer.parseInt(restultLine.substring(0, 3));
 
-		return resultCode;
+		return new Result(resultCode);
 	}
 	
 	/*
 	 * Enumeration used to track connection state
 	 */
-	enum ConnectionState {
+	private enum ConnectionState {
 		OPEN,
 		CLOSED 
 	}
@@ -205,14 +205,14 @@ public class FTClient {
 	/*
 	 * Returns the current connection state
 	 */
-	public ConnectionState getConnectionState() {
+	private ConnectionState getConnectionState() {
 		return connectionState;
 	}
 
 	/*
 	 * Sets the current connection state and updates commands accordingly
 	 */
-	public void setConnectionState(ConnectionState connectionState) {
+	private void setConnectionState(ConnectionState connectionState) {
 		
 		if (this.connectionState == connectionState) return;
 		
@@ -293,7 +293,7 @@ public class FTClient {
 	/*
 	 * This command opens a connection to the server.
 	 */
-	class OpenCommand implements Command {
+	private class OpenCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -324,7 +324,7 @@ public class FTClient {
 					// send user name to server
 					screenOut.println("User:");
 					String user = screenIn.readLine();
-					int result = sendCommandToServer(tom.networking.server.Command.USER, user);
+					Result result = sendCommandToServer(tom.networking.server.Command.USER, user);
 
 					// send password to server
 					screenOut.println("Password:");
@@ -332,7 +332,7 @@ public class FTClient {
 					result = sendCommandToServer(tom.networking.server.Command.PASS, pwd);
 
 					// if login was successful
-					if (result == 200) {
+					if (result.succeeded()) {
 						setConnectionState(ConnectionState.OPEN);
 						screenOut.println("Connected to " + host);
 					} else {
@@ -362,7 +362,7 @@ public class FTClient {
 	/*
 	 * This command closes the connection to the server
 	 */
-	class CloseCommand implements Command {
+	private class CloseCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -373,9 +373,9 @@ public class FTClient {
 				if ((socket != null) && (!socket.isClosed())) {
 
 					// ask the server to terminate the connection
-					int result = sendCommandToServer(tom.networking.server.Command.QUIT);
+					Result result = sendCommandToServer(tom.networking.server.Command.QUIT);
 
-					if (result == 200) {
+					if (result.succeeded()) {
 
 						// release all resources
 						close();
@@ -397,7 +397,7 @@ public class FTClient {
 	/*
 	 * This command quits the client after closing the connection to the server
 	 */
-	class QuitCommand implements Command {
+	private class QuitCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -427,7 +427,7 @@ public class FTClient {
 	/*
 	 * This command retrieves a file from the server using the current mode/type
 	 */
-	class GetCommand implements Command {
+	private class GetCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -441,10 +441,10 @@ public class FTClient {
 				try {
 					
 					// ask server to accept second connection for file transfer
-					int result = sendCommandToServer(tom.networking.server.Command.PASV);
+					Result result = sendCommandToServer(tom.networking.server.Command.PASV);
 					
 					// if server agrees
-					if (result == 200) {
+					if (result.succeeded()) {
 						
 						// open the socket
 						Socket fileSocket = new Socket(host, DATA_PORT);
@@ -454,7 +454,7 @@ public class FTClient {
 						// ask server to send file
 						result = sendCommandToServer(tom.networking.server.Command.RETR, fileName);
 						
-						if (result == 200) {
+						if (result.succeeded()) {
 							
 							// transfer based on mode/type
 							switch (getMode()) {
@@ -492,7 +492,7 @@ public class FTClient {
 	/*
 	 * This command stores a file to the server using the current mode/type
 	 */
-	class PutCommand implements Command {
+	private class PutCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -505,10 +505,10 @@ public class FTClient {
 				try {
 					
 					// ask server to accept second connection for file transfer
-					int result = sendCommandToServer(tom.networking.server.Command.PASV);
+					Result result = sendCommandToServer(tom.networking.server.Command.PASV);
 					
 					// if server agrees
-					if (result == 200) {
+					if (result.succeeded()) {
 						
 						// open the socket
 						Socket fileSocket = new Socket(host, DATA_PORT);
@@ -550,7 +550,7 @@ public class FTClient {
 	/*
 	 * This command sets the current mode/type
 	 */
-	class ModeCommand implements Command {
+	private class ModeCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -560,10 +560,10 @@ public class FTClient {
 				String newMode = parameters[1];
 
 				// ask the server to change mode/type
-				int result = sendCommandToServer(tom.networking.server.Command.TYPE, newMode);
+				Result result = sendCommandToServer(tom.networking.server.Command.TYPE, newMode);
 
 				// if successful, set local mode to match
-				if (result == 200) {
+				if (result.succeeded()) {
 					if (newMode.toUpperCase().equals("A")) {
 						setMode(TransferMode.ASCII);
 					}
@@ -582,7 +582,7 @@ public class FTClient {
 	 * This command instructs the server to terminate. The user must be
 	 * authorized to do this; enforced by server.
 	 */
-	class KillCommand implements Command {
+	private class KillCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -590,10 +590,10 @@ public class FTClient {
 			if (parameterCountIsOK(parameters, 0)) {
 
 				// ask the server to kill itself
-				int result = sendCommandToServer(tom.networking.server.Command.KILL);
+				Result result = sendCommandToServer(tom.networking.server.Command.KILL);
 
 				// if it works
-				if (result == 200) {
+				if (result.succeeded()) {
 
 					close();
 
@@ -611,7 +611,7 @@ public class FTClient {
 	 * This command is executed in place of any normal command that is not valid
 	 * in a given state (open/close).
 	 */
-	class InvalidCommand implements Command {
+	private class InvalidCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -635,7 +635,7 @@ public class FTClient {
 	 * This command is executed whenever the user enters any command which is
 	 * not recognized.
 	 */
-	class UnknownCommand implements Command {
+	private class UnknownCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
@@ -656,7 +656,7 @@ public class FTClient {
 	/*
 	 * This command enumerates the various commands that are available
 	 */
-	class HelpCommand implements Command {
+	private class HelpCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {

@@ -101,12 +101,12 @@ class Connection implements Runnable {
 	private boolean parameterCountIsOK(String[] parameters, int expectedCount) {
 
 		if (parameters.length < expectedCount) {
-			outputToClient(400, "Too few parameters specified. "
+			outputToClient(Result.FAILURE, "Too few parameters specified. "
 					+ (expectedCount - 1) + " were expected.", true);
 			return false;
 		}
 		if (parameters.length > expectedCount) {
-			outputToClient(400, "Too many parameters specified. "
+			outputToClient(Result.FAILURE, "Too many parameters specified. "
 					+ (expectedCount - 1) + " were expected.", true);
 			return false;
 		}
@@ -143,16 +143,16 @@ class Connection implements Runnable {
 				String type = parameters[1];
 
 				if (type.toUpperCase().equals("A")) {
-					outputToClient(200, "Mode set to Ascii.", true);
+					outputToClient(Result.SUCCESS, "Mode set to Ascii.", true);
 					mode = TransferMode.ASCII;
 				} else {
 
 					if (type.toUpperCase().equals("B")) {
-						outputToClient(200, "Mode set to Binary.", true);
+						outputToClient(Result.SUCCESS, "Mode set to Binary.", true);
 						mode = TransferMode.BINARY;
 					} else {
 						outputToClient(
-								400,
+								Result.FAILURE,
 								"Invalid mode specified.  'A' or 'B' are accepted.",
 								true);
 					}
@@ -173,11 +173,11 @@ class Connection implements Runnable {
 
 			if (parameterCountIsOK(parameters, 2)) {
 				user = parameters[1];
-				outputToClient(200, "User: " + user + " - accepted.", false);
+				outputToClient(Result.SUCCESS, "User: " + user + " - accepted.", false);
 				if (user.toUpperCase().equals(USER_ANONYMOUS)) {
-					outputToClient(200, "Send email for password.", true);
+					outputToClient(Result.SUCCESS, "Send email for password.", true);
 				} else {
-					outputToClient(200, "Password required for user " + user,
+					outputToClient(Result.SUCCESS, "Password required for user " + user,
 							true);
 				}
 
@@ -194,10 +194,10 @@ class Connection implements Runnable {
 			if (parameterCountIsOK(parameters, 2)) {
 				String pwd = parameters[1];
 				if (authenticate(user, pwd)) {
-					outputToClient(200, "User: " + user + " - logged in.", true);
+					outputToClient(Result.SUCCESS, "User: " + user + " - logged in.", true);
 					admin = user.toUpperCase().equals(USER_ADMIN);
 				} else {
-					outputToClient(400, "User: " + user + " - Not authorized.",
+					outputToClient(Result.FAILURE, "User: " + user + " - Not authorized.",
 							true);
 				}
 			}
@@ -209,7 +209,7 @@ class Connection implements Runnable {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			outputToClient(400, "Unknown command: " + parameters[0], true);
+			outputToClient(Result.FAILURE, "Unknown command: " + parameters[0], true);
 			return true;
 		}
 	}
@@ -219,7 +219,7 @@ class Connection implements Runnable {
 		@Override
 		public boolean execute(String[] parameters) {
 			try {
-				outputToClient(200, "Goodbye!", true);
+				outputToClient(Result.SUCCESS, "Goodbye!", true);
 				socket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -235,7 +235,7 @@ class Connection implements Runnable {
 
 			if (admin) {
 				try {
-					outputToClient(200, "Terminating Server.  Goodbye!", true);
+					outputToClient(Result.SUCCESS, "Terminating Server.  Goodbye!", true);
 					socket.close();
 					System.exit(0);
 					return false;
@@ -244,7 +244,7 @@ class Connection implements Runnable {
 					e.printStackTrace();
 				}
 			} else {
-				outputToClient(400, "User not authorized to KILL server.", true);
+				outputToClient(Result.FAILURE, "User not authorized to KILL server.", true);
 			}
 			return true;
 		}
@@ -258,7 +258,7 @@ class Connection implements Runnable {
 
 			try {
 				// prepare to accept another connection for data from the client
-				outputToClient(200, "Ready to accept data connection.", true);
+				outputToClient(Result.SUCCESS, "Ready to accept data connection.", true);
 
 				// wait for client connection
 				dataSocket = dataPort.accept();
@@ -278,7 +278,7 @@ class Connection implements Runnable {
 		public boolean execute(String[] parameters) {
 
 			if (dataSocket == null) {
-				outputToClient(400, "Data connection not established.", true);
+				outputToClient(Result.FAILURE, "Data connection not established.", true);
 			}
 
 			if (parameterCountIsOK(parameters, 2)) {
@@ -288,7 +288,7 @@ class Connection implements Runnable {
 					String fileName = parameters[1];
 					File file = new File(fileDir, fileName);
 
-					outputToClient(200, "Begin receiving.", true);
+					outputToClient(Result.SUCCESS, "Begin receiving.", true);
 
 					switch (mode) {
 					case ASCII:
@@ -307,10 +307,10 @@ class Connection implements Runnable {
 					dataSocket.close();
 					dataSocket = null;
 
-					outputToClient(200, "File sent.", true);
+					outputToClient(Result.SUCCESS, "File sent.", true);
 
 				} catch (FileNotFoundException e) {
-					outputToClient(400, "File does not exist.", true);
+					outputToClient(Result.FAILURE, "File does not exist.", true);
 				} catch (IOException e) {
 
 					e.printStackTrace();
@@ -329,7 +329,7 @@ class Connection implements Runnable {
 		public boolean execute(String[] parameters) {
 
 			if (dataSocket == null) {
-				outputToClient(400, "Data connection not established.", true);
+				outputToClient(Result.FAILURE, "Data connection not established.", true);
 			}
 
 			if (parameterCountIsOK(parameters, 2)) {
@@ -350,10 +350,10 @@ class Connection implements Runnable {
 						break;
 					}
 
-					outputToClient(200, "File received.", true);
+					outputToClient(Result.SUCCESS, "File received.", true);
 					
 				} catch (FileNotFoundException e) {
-					outputToClient(400, "File does not exist.", true);
+					outputToClient(Result.FAILURE, "File does not exist.", true);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
