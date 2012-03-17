@@ -35,6 +35,8 @@ class Connection implements Runnable {
 	private String user = null;
 	private boolean admin = false;
 	private TransferMode mode = TransferMode.ASCII;
+	
+	private final UnknownCommand UNKNOWN_COMMAND = new UnknownCommand();
 
 	public Connection(Socket socket, ServerSocket data) {
 
@@ -182,9 +184,9 @@ class Connection implements Runnable {
 		}
 		
 		if (msg != null) {
-			msg.append("  ");
-			msg.append(expCount);
-			msg.append(" parameter");
+			msg.append("  ")
+			  .append(expCount)
+			  .append(" parameter");
 			if (expCount != 1) {
 				msg.append("s were");
 			} else {
@@ -204,24 +206,40 @@ class Connection implements Runnable {
 	 * Get the specified command object from the map
 	 */
 	private Command getCommand(String commandName) {
+		// lookup the command in the map
 		Command cmd = commands.get(commandName.toUpperCase());
+		// if command is not found
 		if (cmd == null) {
-			cmd = commands.get(new UnknownCommand());
+			// return the unknown command
+			cmd = UNKNOWN_COMMAND;
 		}
 		return cmd;
 	}
 
+	/*
+	 * Authenticate the user
+	 */
 	private boolean authenticate(String usr, String pwd) {
 
+		// all anonymous users are allowed
 		if (usr.toUpperCase().equals(USER_ANONYMOUS))
+		{
 			return true;
+		}
 
+		// Admin is the only named account
 		if (usr.toUpperCase().equals(USER_ADMIN) && pwd.equals("admin"))
+		{
 			return true;
+		}
 
+		// all other users are not allowed
 		return false;
 	}
 
+	/*
+	 * This command sets the type (or mode) of the file transfer to Ascii or Binary
+	 */
 	private class TypeCommand implements Command {
 
 		@Override
@@ -229,113 +247,164 @@ class Connection implements Runnable {
 
 			if (parameterCountIsOK(parameters, 1)) {
 
-				String type = parameters[1];
+				// get the new mode
+				String newMode = parameters[1];
 
-				if (type.toUpperCase().equals("A")) {
+				// if "A" set to ascii
+				if (newMode.toUpperCase().equals("A")) {
 					outputToClient(Result.SUCCESS, "Mode set to Ascii.", true);
 					mode = TransferMode.ASCII;
-				} else {
-
-					if (type.toUpperCase().equals("B")) {
-						outputToClient(Result.SUCCESS, "Mode set to Binary.", true);
-						mode = TransferMode.BINARY;
-					} else {
-						outputToClient(
-								Result.FAILURE,
-								"Invalid mode specified.  'A' or 'B' are accepted.",
-								true);
-					}
-				}
+					return true;
+				} 
+				
+				// if "B" set to binary
+				if (newMode.toUpperCase().equals("B")) {
+					outputToClient(Result.SUCCESS, "Mode set to Binary.", true);
+					mode = TransferMode.BINARY;
+					return true;
+				} 
+				
+				// anything else is invalid
+				outputToClient(Result.FAILURE, "Invalid mode specified.  'A' or 'B' are accepted.", true);
 			}
 			return true;
 		}
 	}
 
+	/*
+	 * This command accepts the user name attempting to login
+	 */
 	private class UserCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 1)) {
+				// get the user name
 				user = parameters[1];
-				outputToClient(Result.SUCCESS, "User: " + user + " - accepted.", false);
+				
+				// notify that user is accepted
+				StringBuilder message = new StringBuilder(50);
+				message.append("User '")
+				  .append(user)
+				  .append("' accepted.");
+				outputToClient(Result.SUCCESS, message.toString(), false);
+				
+				// clear message
+				message.setLength(0);
+				
+				// notify of password requirements
 				if (user.toUpperCase().equals(USER_ANONYMOUS)) {
-					outputToClient(Result.SUCCESS, "Send email for password.", true);
+					message.append("Send email for password.");
+					
 				} else {
-					outputToClient(Result.SUCCESS, "Password required for user " + user,
-							true);
+					message.append("Password required for user '")
+					  .append(user)
+					  .append("'");
 				}
-
+				outputToClient(Result.SUCCESS, message.toString(), true);
 			}
 			return true;
 		}
 	}
 
+	/*
+	 * This command accepts the password and attempts the authentication of the user (previously specified)
+	 */
 	private class PassCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 1)) {
+				
+				// if there is not user, notify client and exit
+				if (user == null) {
+					outputToClient(Result.FAILURE, "User has not been specified.", true);
+					return true;
+				}
+				
+				// get the password
 				String pwd = parameters[1];
+				
+				StringBuilder message = new StringBuilder(50);
+				// attempt authentication and notify user
 				if (authenticate(user, pwd)) {
-					outputToClient(Result.SUCCESS, "User: " + user + " - logged in.", true);
+					message.append("User '")
+					  .append(user)
+					  .append("' logged in.");
+					
+					// determine if user is an administrator
 					admin = user.toUpperCase().equals(USER_ADMIN);
+					
+					outputToClient(Result.SUCCESS, message.toString(), !admin);
+					
+					if (admin) {
+						outputToClient(Result.SUCCESS, "User has administrator priveleges.", true);						
+					}
+
 				} else {
-					outputToClient(Result.FAILURE, "User: " + user + " - Not authorized.",
-							true);
+					message.append("User '")
+					  .append(user)
+					  .append(" is not authorized.");
+					outputToClient(Result.FAILURE, message.toString(), true);
 				}
 			}
 			return true;
 		}
 	}
 
-	private class UnknownCommand implements Command {
-
-		@Override
-		public boolean execute(String[] parameters) {
-			outputToClient(Result.FAILURE, "Unknown command: " + parameters[0], true);
-			return true;
-		}
-	}
-
+	/*
+	 * This command closes the connection
+	 */
 	private class QuitCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			try {
-				outputToClient(Result.SUCCESS, "Goodbye!", true);
-				commandSocket.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			
+			// notify client 
+			outputToClient(Result.SUCCESS, "Goodbye!", true);
+
+			// close and release all resources
+			close();
+			
+			// tell main loop to exit
 			return false;
 		}
 	}
 
+	/*
+	 * This command kills the server including all open connections
+	 */
 	private class KillCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
 
 			if (admin) {
-				try {
-					outputToClient(Result.SUCCESS, "Terminating Server.  Goodbye!", true);
-					commandSocket.close();
-					System.exit(0);
-					return false;
+				
+				// notify client 
+				outputToClient(Result.SUCCESS, "Terminating Server.  Goodbye!", true);
 
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				// close the connection and all resources
+				close();
+				
+				// terminate the process
+				System.exit(0);
+				
+				return false;
+
 			} else {
+				// notify client they are not admin
 				outputToClient(Result.FAILURE, "User not authorized to KILL server.", true);
+				return true;
 			}
-			return true;
 		}
 	}
-
-
+	
+	/*
+	 * This command prepares the server to accept a data connection from the client
+	 */
 	private class PasvCommand implements Command {
 
 		@Override
@@ -349,103 +418,132 @@ class Connection implements Runnable {
 				dataSocket = dataPort.accept();
 
 			} catch (IOException e) {
-
+				outputToClient(Result.FAILURE, "IOException: " + e.getMessage(), true);
 				e.printStackTrace();
 			}
 
 			return true;
 		}
 	}
-
-	private class RetrCommand implements Command {
-
+	
+	/*
+	 * This abstract command implements the algorithm for both
+	 * the RETR and STOR commands that transfer files
+	 */
+	private abstract class TransferCommand implements Command {
+	
 		@Override
 		public boolean execute(String[] parameters) {
-
+			
+			// verify that the data connection exists
 			if (dataSocket == null) {
+				// notify client and exit if it does not
 				outputToClient(Result.FAILURE, "Data connection not established.", true);
+				return true;
 			}
 
 			if (parameterCountIsOK(parameters, 1)) {
 
 				try {
 
+					// get the file object
 					String fileName = parameters[1];
 					File file = new File(fileDir, fileName);
 
-					outputToClient(Result.INPROGRESS, "Begin receiving.", true);
-
+					// notify client to begin send/receive
+					outputToClient(Result.INPROGRESS, "Begin send/receive.", true);
+					
+					// perform the transfer, honoring requested mode/type
 					switch (mode) {
 					case ASCII:
-						TransferUtility.transferText(
-								new FileReader(file),
-								new OutputStreamWriter(dataSocket
-										.getOutputStream()));
+						doAsciiTransfer(file, dataSocket);
 						break;
 					case BINARY:
-						TransferUtility.transferBinary(
-								new FileInputStream(file),
-								dataSocket.getOutputStream());
+						doBinaryTransfer(file, dataSocket);
 						break;
 					}
-
+					
+					// close the data socket
 					dataSocket.close();
 					dataSocket = null;
 
-					outputToClient(Result.SUCCESS, "File sent.", true);
+					// notify client that transfer is complete
+					outputToClient(Result.SUCCESS, "File sent/received.", true);
 
 				} catch (FileNotFoundException e) {
 					outputToClient(Result.FAILURE, "File does not exist.", true);
 				} catch (IOException e) {
-
+					outputToClient(Result.FAILURE, "IOException: " + e.getMessage(), true);
 					e.printStackTrace();
 				}
 
 			}
 			return true;
-
 		}
-
+		
+		// performs ascii file transfer
+		protected abstract void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException;
+		
+		// performs binary file transfer
+		protected abstract void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException;
+		
 	}
 
-	private class StorCommand implements Command {
+	/*
+	 * This command retrieves a file from the server and sends it to the client
+	 */
+	private class RetrCommand extends TransferCommand {
+
+		// performs ascii file transfer
+		@Override
+		protected void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
+			TransferUtility.transferText(new FileReader(file), new OutputStreamWriter(dataSocket.getOutputStream()));
+		}
+
+		// performs binary file transfer
+		@Override
+		protected void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
+			TransferUtility.transferBinary(new FileInputStream(file), dataSocket.getOutputStream());
+		}
+	}
+
+	/*
+	 * This command receives a file from the client and stores it on the server
+	 */
+	private class StorCommand extends TransferCommand {
+
+		// performs ascii file transfer
+		@Override
+		protected void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
+			TransferUtility.transferText(new InputStreamReader(dataSocket.getInputStream()), new FileWriter(file));
+		}
+
+		// performs binary file transfer
+		@Override
+		protected void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
+			TransferUtility.transferBinary(dataSocket.getInputStream(), new FileOutputStream(file));
+		}
+	}
+
+	/*
+	 * This command is executed whenever the client sends any command which is
+	 * not recognized.
+	 */
+	private class UnknownCommand implements Command {
 
 		@Override
 		public boolean execute(String[] parameters) {
 
-			if (dataSocket == null) {
-				outputToClient(Result.FAILURE, "Data connection not established.", true);
-			}
+			String command = parameters[0];
 
-			if (parameterCountIsOK(parameters, 1)) {
+			StringBuilder sb = new StringBuilder(75);
+			sb.append("The '");
+			sb.append(command.toUpperCase());
+			sb.append("' command is not recognized.");
 
-				try {
+			outputToClient(Result.FAILURE, sb.toString(), true);
 
-					String fileName = parameters[1];
-					File file = new File(fileDir, fileName);
-
-					outputToClient(Result.INPROGRESS, "Begin sending.", true);
-
-					switch (mode) {
-					case ASCII:
-						TransferUtility.transferText(new InputStreamReader(dataSocket.getInputStream()), new FileWriter(file));
-						break;
-					case BINARY:
-						TransferUtility.transferBinary(dataSocket.getInputStream(), new FileOutputStream(file));
-						break;
-					}
-
-					outputToClient(Result.SUCCESS, "File received.", true);
-					
-				} catch (FileNotFoundException e) {
-					outputToClient(Result.FAILURE, "File does not exist.", true);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
-			}
 			return true;
-
 		}
 	}
 }

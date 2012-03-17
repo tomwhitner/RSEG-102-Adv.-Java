@@ -424,12 +424,13 @@ public class FTClient {
 			}
 		}
 	}
-
+	
 	/*
-	 * This command retrieves a file from the server using the current mode/type
+	 * This abstract command implements the algorithm for both
+	 * the GET and PUT commands that transfer files
 	 */
-	private class GetCommand implements Command {
-
+	private abstract class TransferCommand implements Command {
+	
 		@Override
 		public boolean execute(String[] parameters) {
 
@@ -460,12 +461,10 @@ public class FTClient {
 							// transfer based on mode/type
 							switch (getMode()) {
 							case ASCII:
-								TransferUtility.transferText(new InputStreamReader(
-										fileSocket.getInputStream()), new FileWriter(file));
+								doAsciiTransfer(file, fileSocket);
 								break;
 							case BINARY:
-								TransferUtility.transferBinary(fileSocket.getInputStream(),
-										new FileOutputStream(file));
+								doBinaryTransfer(file, fileSocket);
 								break;
 							}
 						}
@@ -476,7 +475,7 @@ public class FTClient {
 						// close the socket
 						fileSocket.close();
 						
-						screenOut.println("File received.");
+						screenOut.println("File sent/received.");
 					}
 
 				} catch (FileNotFoundException e) {
@@ -488,63 +487,47 @@ public class FTClient {
 			} 
 			return true;
 		}
+		
+		// performs ascii file transfer
+		protected abstract void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException;
+		
+		// performs binary file transfer
+		protected abstract void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException;
+	}
+		
+	/*
+	 * This command retrieves a file from the server using the current mode/type
+	 */
+	private class GetCommand extends TransferCommand {
+
+		// performs ascii file transfer
+		@Override
+		protected void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
+			TransferUtility.transferText(new InputStreamReader(socket.getInputStream()), new FileWriter(file));
+		}
+
+		// performs binary file transfer
+		@Override
+		protected void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
+			TransferUtility.transferBinary(socket.getInputStream(), new FileOutputStream(file));
+		}
 	}
 
 	/*
 	 * This command stores a file to the server using the current mode/type
 	 */
-	private class PutCommand implements Command {
+	private class PutCommand extends TransferCommand {
 
+		// performs ascii file transfer
 		@Override
-		public boolean execute(String[] parameters) {
+		protected void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
+			TransferUtility.transferText(new FileReader(file), new OutputStreamWriter(socket.getOutputStream()));
+		}
 
-			if (parameterCountIsOK(parameters, 1)) {
-
-				String fileName = parameters[1];
-				File file = new File(fileDir, fileName);
-
-				try {
-					
-					// ask server to accept second connection for file transfer
-					Result result = sendCommandToServer(tom.networking.server.Command.PASV);
-					
-					// if server agrees
-					if (result.succeeded()) {
-						
-						// open the socket
-						Socket fileSocket = new Socket(host, DATA_PORT);
-						fileSocket.setSoTimeout(10000);
-							
-						// ask server to receive file
-						sendCommandToServer(tom.networking.server.Command.STOR, fileName);
-
-						// transfer based on mode/type
-						switch (getMode()) {
-						case ASCII:
-							TransferUtility.transferText(new FileReader(file), new OutputStreamWriter(fileSocket.getOutputStream()));
-							break;
-						case BINARY:
-							TransferUtility.transferBinary(new FileInputStream(file), fileSocket.getOutputStream());
-							break;
-						}
-						
-						// wait for file transfer to complete
-						result = waitForServer();
-						
-						// close the socket
-						fileSocket.close();
-
-						screenOut.println("File sent.");
-					}
-
-				} catch (FileNotFoundException e) {
-					screenOut.println("File does not exist.");
-				} catch (IOException e) {
-					screenOut.println("IOException occured: " + e.getMessage());
-					e.printStackTrace();
-				}
-			}
-			return true;
+		// performs binary file transfer
+		@Override
+		protected void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
+			TransferUtility.transferBinary(new FileInputStream(file), socket.getOutputStream());
 		}
 	}
 
@@ -633,28 +616,6 @@ public class FTClient {
 	}
 
 	/*
-	 * This command is executed whenever the user enters any command which is
-	 * not recognized.
-	 */
-	private class UnknownCommand implements Command {
-
-		@Override
-		public boolean execute(String[] parameters) {
-			
-			String command = parameters[0];
-			
-			StringBuilder sb = new StringBuilder(75);
-			sb.append("The '");
-			sb.append(command.toUpperCase());
-			sb.append("' command is not recognized.");
-
-			screenOut.println(sb.toString());
-
-			return true;
-		}
-	}
-	
-	/*
 	 * This command enumerates the various commands that are available
 	 */
 	private class HelpCommand implements Command {
@@ -671,6 +632,28 @@ public class FTClient {
 			screenOut.println(Command.GET + " filename - retrieves the specified file from the server");
 			screenOut.println(Command.PUT + " filename - store the specified file to the server");
 			screenOut.println(Command.KILL + " - kills the server (admin priveleges required)");
+
+			return true;
+		}
+	}
+		
+	/*
+	 * This command is executed whenever the user enters any command which is
+	 * not recognized.
+	 */
+	private class UnknownCommand implements Command {
+
+		@Override
+		public boolean execute(String[] parameters) {
+
+			String command = parameters[0];
+
+			StringBuilder sb = new StringBuilder(75);
+			sb.append("The '");
+			sb.append(command.toUpperCase());
+			sb.append("' command is not recognized.");
+
+			screenOut.println(sb.toString());
 
 			return true;
 		}
