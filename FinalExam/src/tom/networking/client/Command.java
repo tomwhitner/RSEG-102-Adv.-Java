@@ -30,5 +30,9 @@ public interface Command extends tom.networking.Command {
 	 * Set the file type: ascii or binary
 	 */
 	static final String MODE = "MODE";
+	/*
+	 * Provides the user with basic help
+	 */
+	static final String HELP = "HELP";
 
 }

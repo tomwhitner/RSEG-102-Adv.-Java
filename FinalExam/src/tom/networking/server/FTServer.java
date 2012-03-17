@@ -10,7 +10,9 @@ public class FTServer {
 	
 	public static void main(String[] args) {
 
-		try {
+		try {	
+			System.out.println("Welcome to FTServer ...");
+
 			// obtain the command port
 			ServerSocket cmd = new ServerSocket(CMD_PORT);
 			

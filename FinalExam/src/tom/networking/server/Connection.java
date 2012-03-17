@@ -44,7 +44,6 @@ class Connection implements Runnable {
 		commands.put(Command.KILL, new KillCommand());
 		commands.put(Command.USER, new UserCommand());
 		commands.put(Command.PASS, new PassCommand());
-		commands.put(Command.UNKNOWN, new UnknownCommand());
 
 	}
 
@@ -57,7 +56,7 @@ class Connection implements Runnable {
 					socket.getInputStream()));
 			out = new PrintWriter(socket.getOutputStream(), true /* autoFlush */);
 
-			out.println("Welcome to FTServer ...");
+			outputToClient(100, "FTServer Ready.", true);
 
 			boolean proceed = true;
 
@@ -129,7 +128,7 @@ class Connection implements Runnable {
 	private Command getCommand(String commandName) {
 		Command cmd = commands.get(commandName.toUpperCase());
 		if (cmd == null) {
-			cmd = commands.get(Command.UNKNOWN);
+			cmd = commands.get(new UnknownCommand());
 		}
 		return cmd;
 	}
