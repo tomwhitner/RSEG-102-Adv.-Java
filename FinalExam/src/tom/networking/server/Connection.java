@@ -2,22 +2,17 @@ package tom.networking.server;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
-import tom.networking.TransferMode;
-import tom.networking.TransferUtility;
+import tom.networking.TransferStrategy;
 
 class Connection implements Runnable {
 
@@ -25,7 +20,6 @@ class Connection implements Runnable {
 	private final Map<String, Command> commands = new HashMap<String, Command>();
 
 	private final Socket commandSocket;
-	private final ServerSocket dataPort;
 	private Socket dataSocket = null;
 	private BufferedReader in = null;
 	private PrintWriter out = null;
@@ -34,14 +28,14 @@ class Connection implements Runnable {
 	private static final String USER_ADMIN = "ADMIN";
 	private String user = null;
 	private boolean admin = false;
-	private TransferMode mode = TransferMode.ASCII;
 	
 	private final UnknownCommand UNKNOWN_COMMAND = new UnknownCommand();
+	
+	private TransferStrategy transferStrategy = TransferStrategy.AsciiTransfer.getInstance();
 
-	public Connection(Socket socket, ServerSocket data) {
+	Connection(Socket socket) {
 
 		this.commandSocket = socket;
-		this.dataPort = data;
 
 		commands.put(Command.PASV, new PasvCommand());
 		commands.put(Command.RETR, new RetrCommand());
@@ -70,10 +64,9 @@ class Connection implements Runnable {
 
 			boolean proceed = true;
 
+			String line;
 			// stop when command indicates loop should exit (Quit, Kill)
-			while (proceed) {
-				// read a line from client input
-				String line = in.readLine();
+			while (proceed && ((line = in.readLine()) != null)) {
 				
 				System.out.println("Processing: " + line);
 
@@ -249,18 +242,18 @@ class Connection implements Runnable {
 
 				// get the new mode
 				String newMode = parameters[1];
-
+				
 				// if "A" set to ascii
 				if (newMode.toUpperCase().equals("A")) {
 					outputToClient(Result.SUCCESS, "Mode set to Ascii.", true);
-					mode = TransferMode.ASCII;
+					setTransferStrategy(TransferStrategy.AsciiTransfer.getInstance());
 					return true;
 				} 
 				
 				// if "B" set to binary
 				if (newMode.toUpperCase().equals("B")) {
 					outputToClient(Result.SUCCESS, "Mode set to Binary.", true);
-					mode = TransferMode.BINARY;
+					setTransferStrategy(TransferStrategy.BinaryTransfer.getInstance());
 					return true;
 				} 
 				
@@ -412,10 +405,17 @@ class Connection implements Runnable {
 
 			try {
 				// prepare to accept another connection for data from the client
-				outputToClient(Result.SUCCESS, "Ready to accept data connection.", true);
+				outputToClient(Result.SUCCESS, "Ready to accept data connection.", false);
 
-				// wait for client connection
-				dataSocket = dataPort.accept();
+				// generate token
+				Long token = new Random().nextLong();
+				
+				// send the token to the client
+				outputToClient(Result.SUCCESS, "Send token to connect.", false);
+				outputToClient(Result.SUCCESS, "Token = " + token, true);
+
+				// wait for client data connection
+				dataSocket = FTServer.acceptDataConnection(commandSocket.getInetAddress(), token.toString());
 
 			} catch (IOException e) {
 				outputToClient(Result.FAILURE, "IOException: " + e.getMessage(), true);
@@ -427,11 +427,35 @@ class Connection implements Runnable {
 	}
 	
 	/*
+	 * Gets the current transfer strategy
+	 */
+	protected TransferStrategy getTransferStrategy() {
+		return transferStrategy;
+	}
+
+	/*
+	 * Sets the current transfer strategy
+	 */
+	protected void setTransferStrategy(TransferStrategy transferStrategy) {
+		this.transferStrategy = transferStrategy;
+	}
+
+	/*
 	 * This abstract command implements the algorithm for both
 	 * the RETR and STOR commands that transfer files
 	 */
 	private abstract class TransferCommand implements Command {
-	
+		
+		private final String beginMessage;
+		private final String successMessage;
+		private final boolean fileRequired;
+		
+		protected TransferCommand (String beginMessage, String successMessage, boolean fileRequired) {
+			this.beginMessage = beginMessage;
+			this.successMessage = successMessage;
+			this.fileRequired = fileRequired;
+		}
+		
 		@Override
 		public boolean execute(String[] parameters) {
 			
@@ -450,60 +474,60 @@ class Connection implements Runnable {
 					String fileName = parameters[1];
 					File file = new File(fileDir, fileName);
 
-					// notify client to begin send/receive
-					outputToClient(Result.INPROGRESS, "Begin send/receive.", true);
-					
-					// perform the transfer, honoring requested mode/type
-					switch (mode) {
-					case ASCII:
-						doAsciiTransfer(file, dataSocket);
-						break;
-					case BINARY:
-						doBinaryTransfer(file, dataSocket);
-						break;
+					if (fileRequired && !file.exists()) {
+						outputToClient(Result.FAILURE, "File does not exist.", true);
+						return true;
 					}
-					
-					// close the data socket
-					dataSocket.close();
-					dataSocket = null;
 
+					// notify client to begin send/receive
+					outputToClient(Result.INPROGRESS, beginMessage, true);
+					
+					// perform the transfer
+					doTransfer(getTransferStrategy(), file, dataSocket);
+					
 					// notify client that transfer is complete
-					outputToClient(Result.SUCCESS, "File sent/received.", true);
+					outputToClient(Result.SUCCESS, successMessage, true);
 
 				} catch (FileNotFoundException e) {
 					outputToClient(Result.FAILURE, "File does not exist.", true);
 				} catch (IOException e) {
 					outputToClient(Result.FAILURE, "IOException: " + e.getMessage(), true);
 					e.printStackTrace();
+				} finally {
+					if (dataSocket != null) {
+						// close the data socket
+						try {
+							dataSocket.close();
+							dataSocket = null;
+						} catch (IOException e) { 
+							e.printStackTrace();
+						}
+					}
 				}
 
 			}
 			return true;
 		}
 		
-		// performs ascii file transfer
-		protected abstract void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException;
-		
-		// performs binary file transfer
-		protected abstract void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException;
-		
+		// performs file transfer
+		protected abstract void doTransfer(TransferStrategy transferStrategy, File file, Socket socket) throws FileNotFoundException, IOException;
 	}
 
 	/*
 	 * This command retrieves a file from the server and sends it to the client
 	 */
 	private class RetrCommand extends TransferCommand {
-
-		// performs ascii file transfer
-		@Override
-		protected void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
-			TransferUtility.transferText(new FileReader(file), new OutputStreamWriter(dataSocket.getOutputStream()));
+		
+		public RetrCommand() {
+			super("Begin receiving.", "File sent.", true);
 		}
-
-		// performs binary file transfer
+		
+		// performs file transfer (file -> socket)
 		@Override
-		protected void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
-			TransferUtility.transferBinary(new FileInputStream(file), dataSocket.getOutputStream());
+		protected void doTransfer(TransferStrategy transferStrategy, File file, Socket socket)
+				throws FileNotFoundException, IOException {
+			transferStrategy.transfer(file, socket);
+			
 		}
 	}
 
@@ -512,16 +536,15 @@ class Connection implements Runnable {
 	 */
 	private class StorCommand extends TransferCommand {
 
-		// performs ascii file transfer
-		@Override
-		protected void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
-			TransferUtility.transferText(new InputStreamReader(dataSocket.getInputStream()), new FileWriter(file));
+		public StorCommand() {
+			super("Begin sending.", "File received.", false);
 		}
 
-		// performs binary file transfer
+		// performs file transfer (socket -> file)
 		@Override
-		protected void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
-			TransferUtility.transferBinary(dataSocket.getInputStream(), new FileOutputStream(file));
+		protected void doTransfer(TransferStrategy transferStrategy, File file, Socket socket)
+				throws FileNotFoundException, IOException {
+			transferStrategy.transfer(socket, file);
 		}
 	}
 

@@ -2,14 +2,9 @@ package tom.networking.client;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.Socket;
@@ -18,8 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import tom.networking.TransferMode;
-import tom.networking.TransferUtility;
+import tom.networking.TransferStrategy;
 import tom.networking.server.Result;
 
 public class FTClient {
@@ -49,7 +43,8 @@ public class FTClient {
 	private PrintWriter serverOut = null;
 	
 	private ConnectionState connectionState;
-	private TransferMode mode = TransferMode.ASCII;
+	
+	private TransferStrategy transferStrategy = TransferStrategy.AsciiTransfer.getInstance();
 
 	/*
 	 * Program main method.
@@ -112,7 +107,7 @@ public class FTClient {
 	/* 
 	 * Makes sure all resources are closed
 	 */
-	void close() {
+	private void close() {
 		
 		// close the server input stream if necessary
 		if (serverIn != null) {
@@ -191,8 +186,9 @@ public class FTClient {
 
 		// parse the result code from the final result line
 		int resultCode = Integer.parseInt(restultLine.substring(0, 3));
-
-		return new Result(resultCode);
+		String message = restultLine.substring(4);
+		
+		return new Result(resultCode, message);
 	}
 	
 	/*
@@ -243,14 +239,6 @@ public class FTClient {
 			commands.put(Command.HELP, HELP_COMMAND);
 			break;
 		}
-	}
-	
-	private TransferMode getMode() {
-		return mode;
-	}
-
-	private void setMode(TransferMode xfrMode) {
-		this.mode = xfrMode;
 	}
 
 	/*
@@ -411,7 +399,7 @@ public class FTClient {
 				// if the close command is actually a close command, execute it
 				// to close the connection
 				if (cmd.getClass() == CloseCommand.class) {
-					cmd.execute(null);
+					cmd.execute(parameters);
 				}
 
 				screenOut.println("Quitting.  Goodbye.");
@@ -426,10 +414,36 @@ public class FTClient {
 	}
 	
 	/*
+	 * Gets the current transfer strategy
+	 */
+	protected TransferStrategy getTransferStrategy() {
+		return transferStrategy;
+	}
+
+	/*
+	 * Sets the current transfer strategy
+	 */
+	protected void setTransferStrategy(TransferStrategy transferStrategy) {
+		this.transferStrategy = transferStrategy;
+	}
+
+	/*
 	 * This abstract command implements the algorithm for both
 	 * the GET and PUT commands that transfer files
 	 */
 	private abstract class TransferCommand implements Command {
+		
+		private final String serverCommand;
+		private final String successMessage;
+		private final String failureMessage;
+		private final boolean fileRequired;
+		
+		protected TransferCommand(String serverCommand, String successMessage, String failureMessage, boolean fileRequired) {
+			this.serverCommand = serverCommand;
+			this.successMessage = successMessage;
+			this.failureMessage = failureMessage;
+			this.fileRequired = fileRequired;
+		}
 	
 		@Override
 		public boolean execute(String[] parameters) {
@@ -439,7 +453,14 @@ public class FTClient {
 				// construct the file object to store to locally
 				String fileName = parameters[1];
 				File file = new File(fileDir, fileName);
+				
+				if (fileRequired && !file.exists()) {
+					screenOut.println("File does not exist.");
+					return true;
+				}
 
+				Socket dataSocket = null;
+				
 				try {
 					
 					// ask server to accept second connection for file transfer
@@ -449,33 +470,29 @@ public class FTClient {
 					if (result.succeeded()) {
 						
 						// open the socket
-						Socket fileSocket = new Socket(host, DATA_PORT);
-						fileSocket.setSoTimeout(10000);
-						fileSocket.getInputStream();
+						dataSocket = new Socket(host, DATA_PORT);
+						dataSocket.setSoTimeout(10000);
+						
+						// send the token to verify connection
+						PrintWriter pw = new PrintWriter(dataSocket.getOutputStream());
+						pw.println(result.getMessage());
+						pw.flush();
 						
 						// ask server to send file
-						result = sendCommandToServer(tom.networking.server.Command.RETR, fileName);
+						result = sendCommandToServer(serverCommand, fileName);
 						
 						if (result.succeeded()) {
 							
-							// transfer based on mode/type
-							switch (getMode()) {
-							case ASCII:
-								doAsciiTransfer(file, fileSocket);
-								break;
-							case BINARY:
-								doBinaryTransfer(file, fileSocket);
-								break;
-							}
+							// perform the transfer
+							doTransfer(getTransferStrategy(), file, dataSocket);
+	
+							// wait for file transfer to complete
+							result = waitForServer();
+						
+							screenOut.println(successMessage);
+						} else {
+							screenOut.println(failureMessage);							
 						}
-						
-						// wait for file transfer to complete
-						result = waitForServer();
-						
-						// close the socket
-						fileSocket.close();
-						
-						screenOut.println("File sent/received.");
 					}
 
 				} catch (FileNotFoundException e) {
@@ -483,33 +500,42 @@ public class FTClient {
 				} catch (IOException e) {
 					screenOut.println("IOException occured: " + e.getMessage());
 					e.printStackTrace();
+				} finally {
+					// close the socket
+					try {
+						if (dataSocket != null) {
+							dataSocket.close();
+							dataSocket = null;
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			} 
 			return true;
 		}
 		
-		// performs ascii file transfer
-		protected abstract void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException;
-		
-		// performs binary file transfer
-		protected abstract void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException;
+		// performs file transfer
+		protected abstract void doTransfer(TransferStrategy transferStrategy, File file, Socket socket) throws FileNotFoundException, IOException;
 	}
 		
 	/*
 	 * This command retrieves a file from the server using the current mode/type
 	 */
 	private class GetCommand extends TransferCommand {
-
-		// performs ascii file transfer
-		@Override
-		protected void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
-			TransferUtility.transferText(new InputStreamReader(socket.getInputStream()), new FileWriter(file));
+		
+		/*
+		 * constructor
+		 */
+		public GetCommand() {
+			super(tom.networking.server.Command.RETR, "File received.", "File was not received.", false);
 		}
 
-		// performs binary file transfer
+		// performs file transfer (socket -> file)
 		@Override
-		protected void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
-			TransferUtility.transferBinary(socket.getInputStream(), new FileOutputStream(file));
+		protected void doTransfer(TransferStrategy transferStrategy, File file, Socket socket)
+				throws FileNotFoundException, IOException {
+			transferStrategy.transfer(socket, file);
 		}
 	}
 
@@ -518,21 +544,23 @@ public class FTClient {
 	 */
 	private class PutCommand extends TransferCommand {
 
-		// performs ascii file transfer
-		@Override
-		protected void doAsciiTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
-			TransferUtility.transferText(new FileReader(file), new OutputStreamWriter(socket.getOutputStream()));
+		/*
+		 * constructor
+		 */
+		public PutCommand() {
+			super(tom.networking.server.Command.STOR, "File sent.", "File was not sent.", true);
 		}
 
-		// performs binary file transfer
+		// performs file transfer (file -> socket)
 		@Override
-		protected void doBinaryTransfer(File file, Socket socket) throws FileNotFoundException, IOException {
-			TransferUtility.transferBinary(new FileInputStream(file), socket.getOutputStream());
+		protected void doTransfer(TransferStrategy transferStrategy, File file, Socket socket)
+				throws FileNotFoundException, IOException {
+			transferStrategy.transfer(file, socket);
 		}
 	}
 
 	/*
-	 * This command sets the current mode/type
+	 * This command sets the current mode/type by setting the current transfer strategy
 	 */
 	private class ModeCommand implements Command {
 
@@ -546,14 +574,14 @@ public class FTClient {
 				// ask the server to change mode/type
 				Result result = sendCommandToServer(tom.networking.server.Command.TYPE, newMode);
 
-				// if successful, set local mode to match
+				// if successful, set the local transfer strategy accordingly
 				if (result.succeeded()) {
 					if (newMode.toUpperCase().equals("A")) {
-						setMode(TransferMode.ASCII);
+						setTransferStrategy(TransferStrategy.AsciiTransfer.getInstance());
 					}
 
 					if (newMode.toUpperCase().equals("B")) {
-						setMode(TransferMode.BINARY);
+						setTransferStrategy(TransferStrategy.BinaryTransfer.getInstance());
 					}
 				}
 			}
@@ -579,6 +607,7 @@ public class FTClient {
 				// if it works
 				if (result.succeeded()) {
 
+					// release all resources
 					close();
 
 					screenOut.println("Server terminated.");
@@ -632,6 +661,7 @@ public class FTClient {
 			screenOut.println(Command.GET + " filename - retrieves the specified file from the server");
 			screenOut.println(Command.PUT + " filename - store the specified file to the server");
 			screenOut.println(Command.KILL + " - kills the server (admin priveleges required)");
+			screenOut.println(Command.HELP + " - prints this listing");
 
 			return true;
 		}

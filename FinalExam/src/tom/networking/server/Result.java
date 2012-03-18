@@ -7,9 +7,19 @@ public class Result {
 	public static final int FAILURE = 400;
 	
 	private final int result;
+	private final String message;
 	
-	public Result(int result) {
+	public Result(int result, String message) {
 		this.result = result;
+		this.message = message;
+	}
+	
+	public int getResult() {
+		return result;
+	}
+
+	public String getMessage() {
+		return message;
 	}
 	
 	public boolean succeeded () {
