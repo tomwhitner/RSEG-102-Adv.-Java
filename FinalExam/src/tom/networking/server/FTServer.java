@@ -164,7 +164,6 @@ public class FTServer {
 	 * Accepts a new connection on the data port
 	 */
 	private static synchronized Socket acceptDataConnection() throws IOException {
-		
 		// accept a connection
 		return getDataSocket().accept();
 	}
@@ -175,7 +174,7 @@ public class FTServer {
 	/*
 	 * Flag the server to stop when remaining connections are closed
 	 */
-	static synchronized void stop() {
+	static void stop() {
 		System.out.println("Stop request receieved.");
 		setStopped(true);
 	}
@@ -183,7 +182,7 @@ public class FTServer {
 	/*
 	 * The specified connection has ended and can be removed from the collection
 	 */
-	static synchronized void connectionEnded(Connection connection) {
+	static void connectionEnded(Connection connection) {
 		removeConnection(connection);
 	}
 	
