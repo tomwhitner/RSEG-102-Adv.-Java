@@ -14,8 +14,12 @@ import java.util.Map;
 import java.util.Scanner;
 
 import tom.networking.TransferStrategy;
+import tom.networking.server.FTServer;
 import tom.networking.server.Result;
 
+/*
+ * The client application
+ */
 public class FTClient {
 
 	private final File fileDir = new File("client");
@@ -35,8 +39,9 @@ public class FTClient {
 	private final InvalidCommand INVALID_COMMAND = new InvalidCommand();
 	private final UnknownCommand UNKNOWN_COMMAND = new UnknownCommand();
 
-	private static final int COMMAND_PORT = 8189;
-	private static final int DATA_PORT = 8190;
+	private static final int TIMEOUT_CONNECT = 5000; // five second connect timeout
+	private static final int TIMEOUT_NORMAL = 0;  // no timeout after connect
+
 	private String host = null;
 	private Socket socket = null;
 	private Scanner serverIn = null;
@@ -92,8 +97,6 @@ public class FTClient {
 
 				// execute the command
 				proceed = cmd.execute(parameters);
-				
-				
 			} 
 			
 		} catch (IOException e) {
@@ -242,6 +245,20 @@ public class FTClient {
 	}
 
 	/*
+	 * Gets the current transfer strategy
+	 */
+	protected TransferStrategy getTransferStrategy() {
+		return transferStrategy;
+	}
+
+	/*
+	 * Sets the current transfer strategy
+	 */
+	protected void setTransferStrategy(TransferStrategy transferStrategy) {
+		this.transferStrategy = transferStrategy;
+	}
+
+	/*
 	 * Verifies the expected number of parameters are present.
 	 * Reports error to user if not.
 	 * NOTE: Command is first element in parameters[], but is not counted
@@ -294,17 +311,17 @@ public class FTClient {
 
 				try {
 					// create socket connection to server
-					socket = new Socket(host, COMMAND_PORT);
+					socket = new Socket(host, FTServer.CMD_PORT);
 					
 					// temporarily reduce timeout during connection
-					socket.setSoTimeout(5000);
+					socket.setSoTimeout(TIMEOUT_CONNECT);
 
 					// store the server input and output streams
 					serverIn = new Scanner(socket.getInputStream());
 					serverOut = new PrintWriter(socket.getOutputStream(), true);
 
 					// increase timeout to allow for file transfers
-					socket.setSoTimeout(60000);
+					socket.setSoTimeout(TIMEOUT_NORMAL);
 
 					// echo welcome message from server
 					waitForServer();
@@ -414,20 +431,6 @@ public class FTClient {
 	}
 	
 	/*
-	 * Gets the current transfer strategy
-	 */
-	protected TransferStrategy getTransferStrategy() {
-		return transferStrategy;
-	}
-
-	/*
-	 * Sets the current transfer strategy
-	 */
-	protected void setTransferStrategy(TransferStrategy transferStrategy) {
-		this.transferStrategy = transferStrategy;
-	}
-
-	/*
 	 * This abstract command implements the algorithm for both
 	 * the GET and PUT commands that transfer files
 	 */
@@ -438,6 +441,9 @@ public class FTClient {
 		private final String failureMessage;
 		private final boolean fileRequired;
 		
+		/*
+		 * constructor
+		 */
 		protected TransferCommand(String serverCommand, String successMessage, String failureMessage, boolean fileRequired) {
 			this.serverCommand = serverCommand;
 			this.successMessage = successMessage;
@@ -470,7 +476,7 @@ public class FTClient {
 					if (result.succeeded()) {
 						
 						// open the socket
-						dataSocket = new Socket(host, DATA_PORT);
+						dataSocket = new Socket(host, FTServer.DATA_PORT);
 						dataSocket.setSoTimeout(10000);
 						
 						// send the token to verify connection
@@ -610,7 +616,7 @@ public class FTClient {
 					// release all resources
 					close();
 
-					screenOut.println("Server terminated.");
+					screenOut.println("Server accepted termination request.");
 				} else {
 					screenOut.println("Not authorized to terminate server.");
 				}

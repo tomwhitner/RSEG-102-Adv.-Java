@@ -87,6 +87,7 @@ class Connection implements Runnable {
 		} finally {
 			// close all resources
 			close();
+			FTServer.connectionEnded(this);
 		}
 	}
 	
@@ -381,8 +382,8 @@ class Connection implements Runnable {
 				// close the connection and all resources
 				close();
 				
-				// terminate the process
-				System.exit(0);
+				// terminate the server
+				FTServer.stop();
 				
 				return false;
 
