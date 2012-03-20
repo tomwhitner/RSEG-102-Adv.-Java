@@ -333,7 +333,7 @@ class Connection implements Runnable {
 					outputToClient(Result.SUCCESS, message.toString(), !admin);
 					
 					if (admin) {
-						outputToClient(Result.SUCCESS, "User has administrator priveleges.", true);						
+						outputToClient(Result.SUCCESS, "User has administrator privileges.", true);						
 					}
 
 				} else {
