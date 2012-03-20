@@ -126,13 +126,11 @@ public class FTClient {
 		
 		// close the socket if necessary
 		if (socket != null) {
-			if (!socket.isClosed()) {
-				try {
-					socket.close();
-				} catch (IOException e) {
-					// Not much can/should be done here.  Exiting anyway.
-					e.printStackTrace();
-				}
+			try {
+				socket.close();
+			} catch (IOException e) {
+				// Not much can/should be done here.  Exiting anyway.
+				e.printStackTrace();
 			}
 			socket = null;
 		}
@@ -328,16 +326,21 @@ public class FTClient {
 					//screenOut.println(serverIn.nextLine());
 
 					// send user name to server
-					screenOut.println("User:");
+					screenOut.print("User: ");
+					screenOut.flush();
 					String user = screenIn.readLine();
 					Result result = sendCommandToServer(tom.networking.server.Command.USER, user);
 
-					// send password to server
-					screenOut.println("Password:");
-					String pwd = screenIn.readLine();
-					result = sendCommandToServer(tom.networking.server.Command.PASS, pwd);
-
-					// if login was successful
+					// if server accepted user
+					if (result.succeeded()) {
+						// send password to server
+						screenOut.print("Password: ");
+						screenOut.flush();
+						String pwd = screenIn.readLine();
+						result = sendCommandToServer(tom.networking.server.Command.PASS, pwd);
+					}
+					
+					// if login was successful (both previous commands executed successfully)
 					if (result.succeeded()) {
 						setConnectionState(ConnectionState.OPEN);
 						screenOut.println("Connected to " + host);
@@ -346,6 +349,7 @@ public class FTClient {
 						setConnectionState(ConnectionState.CLOSED);
 						screenOut.println("Failed to connect to " + host);
 					}
+					
 				} catch (UnknownHostException e) {
 					screenOut.println("Unknown host: " + host);
 				} catch (ConnectException ex) {
