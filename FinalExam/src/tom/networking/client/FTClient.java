@@ -665,7 +665,7 @@ public class FTClient {
 			screenOut.println(Command.QUIT + " - quits the client, closing the connection if open");
 			screenOut.println(Command.MODE + " A|B - sets the transfer mode to Ascii or Binary");
 			screenOut.println(Command.GET + " filename - retrieves the specified file from the server");
-			screenOut.println(Command.PUT + " filename - store the specified file to the server");
+			screenOut.println(Command.PUT + " filename - stores the specified file to the server");
 			screenOut.println(Command.KILL + " - kills the server (admin priveleges required)");
 			screenOut.println(Command.HELP + " - prints this listing");
 

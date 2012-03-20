@@ -20,7 +20,7 @@ FTClient
   QUIT - quits the client, closing the connection if open
   MODE A|B - sets the transfer mode to Ascii or Binary
   GET filename - retrieves the specified file from the server
-  PUT filename - store the specified file to the server
+  PUT filename - stores the specified file to the server
   KILL - kills the server (admin priveleges required)
   HELP - prints this listing
 
@@ -32,7 +32,7 @@ FTClient
   Admin - password is 'admin'
   
   User names are not case-sensitive.  Passwords are case-sensitive.
-  The Admin account can be used to terminate the server with the KILL command.
+  The Admin account can be used to terminate the server from the client with the KILL command.
 
 
 FTServer
@@ -48,7 +48,7 @@ FTServer
 	QUIT - Close the connection
 	KILL - Kill the server and close the connection, if authorized
 
- The client handles sending these commands to the server.
+ This is just for information.  The client handles sending these commands to the server.
 
 
 Sample Files
@@ -62,13 +62,15 @@ Sample Files
 
 Known Limitations
 
- The user's passwrod is not masked in the FTClient application for the reasons listed here:
+ The user's password is not masked in the FTClient application for the reasons listed here:
     http://java.sun.com/developer/technicalArticles/Security/pwordmask/ 
   
  Admin is the only named account.  It is hard-coded.
  
  There is no support for directories.  Directories cannot be changed or listed.  
-   All files are stored to and retrieved from the predefined directories.
+   All files are stored to and retrieved from predefined directories.
+   
+ If the target file exists, it will simply be overwritten without warning.
    
    
 Sample Scenario
