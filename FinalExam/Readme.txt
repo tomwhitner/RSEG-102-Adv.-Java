@@ -1,12 +1,12 @@
 
 FTClient/FTServer (c) 2012 Tom Whitner
 
- FTClient/FTServer provides a pair of application which offer a 
-  rudminetary implementation of the File Transfer Protocol (FTP).
+ FTClient/FTServer provides a pair of application which offers a 
+  rudimentary implementation of the File Transfer Protocol (FTP).
 
  These applications use two ports for communication:
- - Command Port (8189) - This port is used to communicate commands 
- - Data Port (8190) - This port is used to transfer the files
+  Command Port (8189) - This port is used to communicate commands 
+  Data Port (8190) - This port is used to transfer the files
 
  These applications support sending and receiving both ascii and binary files.
 
@@ -54,10 +54,10 @@ FTServer
 Sample Files
  
  There are four sample files provided to test the service.
- - client.jpg - Sample binary file to test PUT
- - client.txt - Sample ascii file to test PUT
- - server.png - Sample binary file to test GET
- - server.txt - Sample ascii file to test GET
+  client.jpg - Sample binary file to test PUT
+  client.txt - Sample ascii file to test PUT
+  server.png - Sample binary file to test GET
+  server.txt - Sample ascii file to test GET
 
 
 Known Limitations
@@ -73,6 +73,18 @@ Known Limitations
  If the target file exists, it will simply be overwritten without warning.
    
    
+Patterns
+
+ The following patterns were used in the implementation of these applications:
+  Command - Both the client and server employ the Command Pattern to implement the various commands each supports.
+  Strategy - The Strategy Pattern is used to abstract away the differences of the ascii and binary file transfer.
+  Singleton - The two stateless file transfer strategies are implemented as Singletons as there is only ever one instance of each needed.
+  Template Method - The file transfer commands for both the client and server employ the Template Method pattern as the file transfer algorithm 
+     is the similar for both puts and gets.  Only the direction of the transfer and minor message details are different.
+  State - A minor variation of the State Strategy is used in the client to manage the behavior of commands that make sense only when the connection 
+     is open or closed.  This is accomplished by substituting and InvalidCommand in place of the actual command when the command does not make
+     sense for the current connection state.
+    
 Sample Scenario
 
 	Begin by running the client and server applications.
@@ -132,7 +144,7 @@ admin
 	Password:
 admin
 	200-User 'admin' logged in.
-	200 User has administrator priveleges.
+	200 User has administrator privileges.
 	Connected to localhost
 kill
 	200 Terminating Server.  Goodbye!
