@@ -1,7 +1,10 @@
 package tom.networking.client;
 
-public interface Command extends tom.networking.Command {
-
+/*
+ * Base for client-side commands.  Includes constants for command names.
+ */
+public abstract class Command extends tom.networking.Command {
+	
 	/*
 	 * Open a connection to the server
 	 */

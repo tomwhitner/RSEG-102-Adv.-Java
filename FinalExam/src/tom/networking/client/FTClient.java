@@ -298,10 +298,10 @@ public class FTClient {
 	/*
 	 * This command opens a connection to the server.
 	 */
-	private class OpenCommand implements Command {
+	private class OpenCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 1)) {
 
@@ -375,10 +375,10 @@ public class FTClient {
 	/*
 	 * This command closes the connection to the server
 	 */
-	private class CloseCommand implements Command {
+	private class CloseCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 0)) {
 
@@ -410,10 +410,10 @@ public class FTClient {
 	/*
 	 * This command quits the client after closing the connection to the server
 	 */
-	private class QuitCommand implements Command {
+	private class QuitCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 0)) {
 
@@ -441,7 +441,7 @@ public class FTClient {
 	 * This abstract command implements the algorithm for both the GET and PUT
 	 * commands that transfer files
 	 */
-	private abstract class TransferCommand implements Command {
+	private abstract class TransferCommand extends Command {
 
 		private final String serverCommand;
 		private final String successMessage;
@@ -460,7 +460,7 @@ public class FTClient {
 		}
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 1)) {
 
@@ -578,10 +578,10 @@ public class FTClient {
 	 * This command sets the current mode/type by setting the current transfer
 	 * strategy
 	 */
-	private class ModeCommand implements Command {
+	private class ModeCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 1)) {
 
@@ -610,10 +610,10 @@ public class FTClient {
 	 * This command instructs the server to terminate. The user must be
 	 * authorized to do this; enforced by server.
 	 */
-	private class KillCommand implements Command {
+	private class KillCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 0)) {
 
@@ -640,10 +640,10 @@ public class FTClient {
 	 * This command is executed in place of any normal command that is not valid
 	 * in a given state (open/close).
 	 */
-	private class InvalidCommand implements Command {
+	private class InvalidCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			String command = parameters[0];
 
@@ -663,10 +663,10 @@ public class FTClient {
 	/*
 	 * This command enumerates the various commands that are available
 	 */
-	private class HelpCommand implements Command {
+	private class HelpCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			screenOut.println("Supported commands are:");
 			screenOut.println("");
@@ -687,10 +687,10 @@ public class FTClient {
 	 * This command is executed whenever the user enters any command which is
 	 * not recognized.
 	 */
-	private class UnknownCommand implements Command {
+	private class UnknownCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			String command = parameters[0];
 

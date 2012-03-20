@@ -67,8 +67,6 @@ class Connection implements Runnable {
 			// stop when command indicates loop should exit (Quit, Kill)
 			while (proceed && ((line = in.readLine()) != null)) {
 
-				System.out.println("Processing: " + line);
-
 				// split it into tokens
 				String[] parameters = line.split(" ");
 
@@ -228,10 +226,10 @@ class Connection implements Runnable {
 	 * This command sets the type (or mode) of the file transfer to Ascii or
 	 * Binary
 	 */
-	private class TypeCommand implements Command {
+	private class TypeCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 1)) {
 
@@ -262,10 +260,10 @@ class Connection implements Runnable {
 	/*
 	 * This command accepts the user name attempting to login
 	 */
-	private class UserCommand implements Command {
+	private class UserCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 1)) {
 				// get the user name
@@ -296,10 +294,25 @@ class Connection implements Runnable {
 	 * This command accepts the password and attempts the authentication of the
 	 * user (previously specified)
 	 */
-	private class PassCommand implements Command {
+	private class PassCommand extends Command {
+		
+		/*
+		 * Execute the specific command. 
+		 * Return true if process should continue; false if process should terminate.
+		 * Override to hide password from log
+		 */
+		@Override
+		public boolean execute (String[] parameters) {
+			
+			System.out.println("Processing: " + Command.PASS + " (?)");
+
+			return doExecute(parameters);
+			
+		}
+
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 1)) {
 
@@ -338,10 +351,10 @@ class Connection implements Runnable {
 	/*
 	 * This command closes the connection
 	 */
-	private class QuitCommand implements Command {
+	private class QuitCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			// notify client
 			outputToClient(Result.SUCCESS, "Goodbye!", true);
@@ -357,10 +370,10 @@ class Connection implements Runnable {
 	/*
 	 * This command kills the server including all open connections
 	 */
-	private class KillCommand implements Command {
+	private class KillCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			if (admin) {
 
@@ -387,10 +400,10 @@ class Connection implements Runnable {
 	 * This command prepares the server to accept a data connection from the
 	 * client
 	 */
-	private class PasvCommand implements Command {
+	private class PasvCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			try {
 				// prepare to accept another connection for data from the client
@@ -433,7 +446,7 @@ class Connection implements Runnable {
 	 * This abstract command implements the algorithm for both the RETR and STOR
 	 * commands that transfer files
 	 */
-	private abstract class TransferCommand implements Command {
+	private abstract class TransferCommand extends Command {
 
 		private final String beginMessage;
 		private final String successMessage;
@@ -446,7 +459,7 @@ class Connection implements Runnable {
 		}
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			// verify that the data connection exists
 			if (dataSocket == null) {
@@ -542,10 +555,10 @@ class Connection implements Runnable {
 	 * This command is executed whenever the client sends any command which is
 	 * not recognized.
 	 */
-	private class UnknownCommand implements Command {
+	private class UnknownCommand extends Command {
 
 		@Override
-		public boolean execute(String[] parameters) {
+		public boolean doExecute(String[] parameters) {
 
 			String command = parameters[0];
 
