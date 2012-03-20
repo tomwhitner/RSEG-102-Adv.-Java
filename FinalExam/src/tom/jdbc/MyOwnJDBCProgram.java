@@ -99,8 +99,7 @@ public class MyOwnJDBCProgram {
 	}
 
 	private static void listDept(Connection conn) throws SQLException {
-		String[] columns = { "DEPT_ID", "DEPT_NAME" };
-		executeQuery(conn, DEPT_SELECT_SQL, columns);
+		executeQuery(conn, DEPT_SELECT_SQL, "DEPT_ID", "DEPT_NAME");
 	}
 
 	private static void dropEmployeeTable(Connection conn) throws SQLException {
@@ -117,8 +116,7 @@ public class MyOwnJDBCProgram {
 	}
 
 	private static void listEmployee(Connection conn) throws SQLException {
-		String[] columns = { "EMP_ID", "NAME", "LOCATION", "DEPT" };
-		executeQuery(conn, EMPLOYEE_SELECT_SQL, columns);
+		executeQuery(conn, EMPLOYEE_SELECT_SQL, "EMP_ID", "NAME", "LOCATION", "DEPT");
 	}
 
 	private static void executeSql(Connection conn, String sql) throws SQLException {
@@ -127,7 +125,7 @@ public class MyOwnJDBCProgram {
 		stat.execute(sql);
 	}
 
-	private static void executeQuery(Connection conn, String sql, String[] columns) throws SQLException {
+	private static void executeQuery(Connection conn, String sql, String... columns) throws SQLException {
 		System.out.println(String.format("Querying:  '%s'", sql));
 		Statement stat = conn.createStatement();
 		ResultSet result = stat.executeQuery(sql);
