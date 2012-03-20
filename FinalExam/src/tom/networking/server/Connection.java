@@ -22,14 +22,14 @@ class Connection implements Runnable {
 	private Socket dataSocket = null;
 	private BufferedReader in = null;
 	private PrintWriter out = null;
-	
+
 	private static final String USER_ANONYMOUS = "ANONYMOUS";
 	private static final String USER_ADMIN = "ADMIN";
 	private String user = null;
 	private boolean admin = false;
-	
+
 	private final UnknownCommand UNKNOWN_COMMAND = new UnknownCommand();
-	
+
 	private TransferStrategy transferStrategy = TransferStrategy.AsciiTransfer.getInstance();
 
 	Connection(Socket socket) {
@@ -48,8 +48,8 @@ class Connection implements Runnable {
 	}
 
 	/*
-	 * This is the main method for the connection
-	 * It loops, accepting and processing commands from the client.
+	 * This is the main method for the connection It loops, accepting and
+	 * processing commands from the client.
 	 */
 	@Override
 	public void run() {
@@ -66,18 +66,18 @@ class Connection implements Runnable {
 			String line;
 			// stop when command indicates loop should exit (Quit, Kill)
 			while (proceed && ((line = in.readLine()) != null)) {
-				
+
 				System.out.println("Processing: " + line);
 
 				// split it into tokens
 				String[] parameters = line.split(" ");
-				
+
 				// first token is the command name
 				String commandName = parameters[0];
 
 				// retrieve the command object by name
 				Command cmd = getCommand(commandName);
-				
+
 				// execute the command
 				proceed = cmd.execute(parameters);
 			}
@@ -90,46 +90,46 @@ class Connection implements Runnable {
 			FTServer.connectionEnded(this);
 		}
 	}
-	
-	/* 
+
+	/*
 	 * Makes sure all resources are closed
 	 */
 	void close() {
-		
+
 		// close the client input stream if necessary
 		if (in != null) {
 			try {
 				in.close();
 			} catch (IOException e) {
-				// Not much can/should be done here.  Exiting anyway.
+				// Not much can/should be done here. Exiting anyway.
 				e.printStackTrace();
 			}
 			in = null;
 		}
-		
+
 		// close the client output stream if necessary
 		if (out != null) {
 			out.close();
 			out = null;
 		}
-		
+
 		// close the command socket if necessary
 		if (commandSocket != null) {
 			try {
 				commandSocket.close();
 			} catch (IOException e) {
-				// Not much can/should be done here.  Exiting anyway.
+				// Not much can/should be done here. Exiting anyway.
 				e.printStackTrace();
 			}
 		}
-		
+
 		// close the data socket if necessary
 		if (dataSocket != null) {
 			if (!dataSocket.isClosed()) {
 				try {
 					dataSocket.close();
 				} catch (IOException e) {
-					// Not much can/should be done here.  Exiting anyway.
+					// Not much can/should be done here. Exiting anyway.
 					e.printStackTrace();
 				}
 			}
@@ -137,8 +137,8 @@ class Connection implements Runnable {
 	}
 
 	/*
-	 * Send well-formatted message to client
-	 * This includes codes that enable the client to determine success or failure
+	 * Send well-formatted message to client This includes codes that enable the
+	 * client to determine success or failure
 	 */
 	private void outputToClient(int code, String message, boolean last) {
 
@@ -150,43 +150,41 @@ class Connection implements Runnable {
 		sb.append(code);
 		sb.append(last ? " " : "-");
 		sb.append(message);
-		
+
 		// send the message to the client
 		out.println(sb.toString());
 	}
 
 	/*
-	 * Verifies the expected number of parameters are present.
-	 * Reports error to client if not.
-	 * NOTE: Command is first element in parameters[], but is not counted
+	 * Verifies the expected number of parameters are present. Reports error to
+	 * client if not. NOTE: Command is first element in parameters[], but is not
+	 * counted
 	 */
 	private boolean parameterCountIsOK(String[] parameters, int expCount) {
-		
+
 		int paramCount = parameters.length - 1;
-		
+
 		StringBuilder msg = null;
 
 		if (paramCount < expCount) {
 			msg = new StringBuilder("Too few parameters were specified.");
 		}
-		
+
 		if (paramCount > expCount) {
 			msg = new StringBuilder("Too many parameters were specified.");
 		}
-		
+
 		if (msg != null) {
-			msg.append("  ")
-			  .append(expCount)
-			  .append(" parameter");
+			msg.append("  ").append(expCount).append(" parameter");
 			if (expCount != 1) {
 				msg.append("s were");
 			} else {
 				msg.append(" was");
 			}
 			msg.append(" expected.");
-			
+
 			outputToClient(Result.FAILURE, msg.toString(), true);
-			
+
 			return false;
 		}
 
@@ -213,14 +211,12 @@ class Connection implements Runnable {
 	private boolean authenticate(String usr, String pwd) {
 
 		// all anonymous users are allowed
-		if (usr.toUpperCase().equals(USER_ANONYMOUS))
-		{
+		if (usr.toUpperCase().equals(USER_ANONYMOUS)) {
 			return true;
 		}
 
 		// Admin is the only named account
-		if (usr.toUpperCase().equals(USER_ADMIN) && pwd.equals("admin"))
-		{
+		if (usr.toUpperCase().equals(USER_ADMIN) && pwd.equals("admin")) {
 			return true;
 		}
 
@@ -229,7 +225,8 @@ class Connection implements Runnable {
 	}
 
 	/*
-	 * This command sets the type (or mode) of the file transfer to Ascii or Binary
+	 * This command sets the type (or mode) of the file transfer to Ascii or
+	 * Binary
 	 */
 	private class TypeCommand implements Command {
 
@@ -240,21 +237,21 @@ class Connection implements Runnable {
 
 				// get the new mode
 				String newMode = parameters[1];
-				
+
 				// if "A" set to ascii
 				if (newMode.toUpperCase().equals("A")) {
 					outputToClient(Result.SUCCESS, "Mode set to Ascii.", true);
 					setTransferStrategy(TransferStrategy.AsciiTransfer.getInstance());
 					return true;
-				} 
-				
+				}
+
 				// if "B" set to binary
 				if (newMode.toUpperCase().equals("B")) {
 					outputToClient(Result.SUCCESS, "Mode set to Binary.", true);
 					setTransferStrategy(TransferStrategy.BinaryTransfer.getInstance());
 					return true;
-				} 
-				
+				}
+
 				// anything else is invalid
 				outputToClient(Result.FAILURE, "Invalid mode specified.  'A' or 'B' are accepted.", true);
 			}
@@ -273,25 +270,21 @@ class Connection implements Runnable {
 			if (parameterCountIsOK(parameters, 1)) {
 				// get the user name
 				user = parameters[1];
-				
+
 				// notify that user is accepted
 				StringBuilder message = new StringBuilder(50);
-				message.append("User '")
-				  .append(user)
-				  .append("' accepted.");
+				message.append("User '").append(user).append("' accepted.");
 				outputToClient(Result.SUCCESS, message.toString(), false);
-				
+
 				// clear message
 				message.setLength(0);
-				
+
 				// notify of password requirements
 				if (user.toUpperCase().equals(USER_ANONYMOUS)) {
 					message.append("Send email for password.");
-					
+
 				} else {
-					message.append("Password required for user '")
-					  .append(user)
-					  .append("'");
+					message.append("Password required for user '").append(user).append("'");
 				}
 				outputToClient(Result.SUCCESS, message.toString(), true);
 			}
@@ -300,7 +293,8 @@ class Connection implements Runnable {
 	}
 
 	/*
-	 * This command accepts the password and attempts the authentication of the user (previously specified)
+	 * This command accepts the password and attempts the authentication of the
+	 * user (previously specified)
 	 */
 	private class PassCommand implements Command {
 
@@ -308,36 +302,32 @@ class Connection implements Runnable {
 		public boolean execute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 1)) {
-				
+
 				// if there is not user, notify client and exit
 				if (user == null) {
 					outputToClient(Result.FAILURE, "User has not been specified.", true);
 					return true;
 				}
-				
+
 				// get the password
 				String pwd = parameters[1];
-				
+
 				StringBuilder message = new StringBuilder(50);
 				// attempt authentication and notify user
 				if (authenticate(user, pwd)) {
-					message.append("User '")
-					  .append(user)
-					  .append("' logged in.");
-					
+					message.append("User '").append(user).append("' logged in.");
+
 					// determine if user is an administrator
 					admin = user.toUpperCase().equals(USER_ADMIN);
-					
+
 					outputToClient(Result.SUCCESS, message.toString(), !admin);
-					
+
 					if (admin) {
-						outputToClient(Result.SUCCESS, "User has administrator privileges.", true);						
+						outputToClient(Result.SUCCESS, "User has administrator privileges.", true);
 					}
 
 				} else {
-					message.append("User '")
-					  .append(user)
-					  .append(" is not authorized.");
+					message.append("User '").append(user).append(" is not authorized.");
 					outputToClient(Result.FAILURE, message.toString(), true);
 				}
 			}
@@ -352,13 +342,13 @@ class Connection implements Runnable {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			
-			// notify client 
+
+			// notify client
 			outputToClient(Result.SUCCESS, "Goodbye!", true);
 
 			// close and release all resources
 			close();
-			
+
 			// tell main loop to exit
 			return false;
 		}
@@ -373,16 +363,16 @@ class Connection implements Runnable {
 		public boolean execute(String[] parameters) {
 
 			if (admin) {
-				
-				// notify client 
+
+				// notify client
 				outputToClient(Result.SUCCESS, "Terminating Server.  Goodbye!", true);
 
 				// close the connection and all resources
 				close();
-				
+
 				// terminate the server
 				FTServer.stop();
-				
+
 				return false;
 
 			} else {
@@ -392,9 +382,10 @@ class Connection implements Runnable {
 			}
 		}
 	}
-	
+
 	/*
-	 * This command prepares the server to accept a data connection from the client
+	 * This command prepares the server to accept a data connection from the
+	 * client
 	 */
 	private class PasvCommand implements Command {
 
@@ -407,7 +398,7 @@ class Connection implements Runnable {
 
 				// generate token
 				Long token = new Random().nextLong();
-				
+
 				// send the token to the client
 				outputToClient(Result.SUCCESS, "Send token to connect.", false);
 				outputToClient(Result.SUCCESS, "Token = " + token, true);
@@ -423,7 +414,7 @@ class Connection implements Runnable {
 			return true;
 		}
 	}
-	
+
 	/*
 	 * Gets the current transfer strategy
 	 */
@@ -439,24 +430,24 @@ class Connection implements Runnable {
 	}
 
 	/*
-	 * This abstract command implements the algorithm for both
-	 * the RETR and STOR commands that transfer files
+	 * This abstract command implements the algorithm for both the RETR and STOR
+	 * commands that transfer files
 	 */
 	private abstract class TransferCommand implements Command {
-		
+
 		private final String beginMessage;
 		private final String successMessage;
 		private final boolean fileRequired;
-		
-		protected TransferCommand (String beginMessage, String successMessage, boolean fileRequired) {
+
+		protected TransferCommand(String beginMessage, String successMessage, boolean fileRequired) {
 			this.beginMessage = beginMessage;
 			this.successMessage = successMessage;
 			this.fileRequired = fileRequired;
 		}
-		
+
 		@Override
 		public boolean execute(String[] parameters) {
-			
+
 			// verify that the data connection exists
 			if (dataSocket == null) {
 				// notify client and exit if it does not
@@ -479,10 +470,10 @@ class Connection implements Runnable {
 
 					// notify client to begin send/receive
 					outputToClient(Result.INPROGRESS, beginMessage, true);
-					
+
 					// perform the transfer
 					doTransfer(getTransferStrategy(), file, dataSocket);
-					
+
 					// notify client that transfer is complete
 					outputToClient(Result.SUCCESS, successMessage, true);
 
@@ -497,7 +488,7 @@ class Connection implements Runnable {
 						try {
 							dataSocket.close();
 							dataSocket = null;
-						} catch (IOException e) { 
+						} catch (IOException e) {
 							e.printStackTrace();
 						}
 					}
@@ -506,26 +497,27 @@ class Connection implements Runnable {
 			}
 			return true;
 		}
-		
+
 		// performs file transfer
-		protected abstract void doTransfer(TransferStrategy transferStrategy, File file, Socket socket) throws FileNotFoundException, IOException;
+		protected abstract void doTransfer(TransferStrategy transferStrategy, File file, Socket socket)
+				throws FileNotFoundException, IOException;
 	}
 
 	/*
 	 * This command retrieves a file from the server and sends it to the client
 	 */
 	private class RetrCommand extends TransferCommand {
-		
+
 		public RetrCommand() {
 			super("Begin receiving.", "File sent.", true);
 		}
-		
+
 		// performs file transfer (file -> socket)
 		@Override
 		protected void doTransfer(TransferStrategy transferStrategy, File file, Socket socket)
 				throws FileNotFoundException, IOException {
 			transferStrategy.transfer(file, socket);
-			
+
 		}
 	}
 

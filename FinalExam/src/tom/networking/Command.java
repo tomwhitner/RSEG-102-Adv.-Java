@@ -6,8 +6,8 @@ package tom.networking;
 public interface Command {
 
 	/*
-	 * Execute the specific command.
-	 * Return true if process should continue; false if process should terminate.
+	 * Execute the specific command. Return true if process should continue;
+	 * false if process should terminate.
 	 */
 	boolean execute(String[] parameters);
 

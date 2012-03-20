@@ -18,11 +18,11 @@ public interface Command extends tom.networking.Command {
 	 * Kill the server and close the connection, if authorized
 	 */
 	static final String KILL = "KILL";
-	/* 
+	/*
 	 * Get a file from the server
 	 */
 	static final String GET = "GET";
-	/* 
+	/*
 	 * Put a file to the server
 	 */
 	static final String PUT = "PUT";

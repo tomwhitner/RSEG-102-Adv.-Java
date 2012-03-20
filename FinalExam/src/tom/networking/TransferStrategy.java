@@ -23,39 +23,40 @@ import java.net.Socket;
  * This interface defines the contract for transferring data from file to socket or socket to file
  */
 public interface TransferStrategy {
-	
+
 	/*
 	 * Transfers data from file to socket
 	 */
 	void transfer(File file, Socket socket) throws FileNotFoundException, IOException;
-	
+
 	/*
 	 * Transfers data from socket to file
 	 */
 	void transfer(Socket socket, File file) throws FileNotFoundException, IOException;
 
 	/*
-	 * This class is a concrete implementation of the TransferStrategy interface for Ascii/Text data
-	 * It implements the singleton design pattern
+	 * This class is a concrete implementation of the TransferStrategy interface
+	 * for Ascii/Text data It implements the singleton design pattern
 	 */
 	public class AsciiTransfer implements TransferStrategy {
-	
-		private AsciiTransfer() {}
-		
+
+		private AsciiTransfer() {
+		}
+
 		private static AsciiTransfer theInstance = new AsciiTransfer();
-		
+
 		public static AsciiTransfer getInstance() {
 			return theInstance;
 		}
-		
+
 		/*
 		 * Transfers text data from socket to file
 		 */
 		@Override
 		public void transfer(File file, Socket socket) throws FileNotFoundException, IOException {
-			TransferUtility.transferText(new FileReader(file), new OutputStreamWriter(socket.getOutputStream()));		
+			TransferUtility.transferText(new FileReader(file), new OutputStreamWriter(socket.getOutputStream()));
 		}
-	
+
 		/*
 		 * Transfers text data from socket to file
 		 */
@@ -64,38 +65,39 @@ public interface TransferStrategy {
 			TransferUtility.transferText(new InputStreamReader(socket.getInputStream()), new FileWriter(file));
 		}
 	}
-	
+
 	/*
-	 * This class is a concrete implementation of the TransferStrategy interface for Binary data
-	 * It implements the singleton design pattern
+	 * This class is a concrete implementation of the TransferStrategy interface
+	 * for Binary data It implements the singleton design pattern
 	 */
 	public class BinaryTransfer implements TransferStrategy {
-		
-		private BinaryTransfer() {}
-		
+
+		private BinaryTransfer() {
+		}
+
 		private static BinaryTransfer theInstance = new BinaryTransfer();
-		
+
 		public static BinaryTransfer getInstance() {
 			return theInstance;
 		}
-	
+
 		/*
 		 * Transfers binary data from socket to file
 		 */
 		@Override
 		public void transfer(File file, Socket socket) throws FileNotFoundException, IOException {
-			TransferUtility.transferBinary(new FileInputStream(file), socket.getOutputStream());		
+			TransferUtility.transferBinary(new FileInputStream(file), socket.getOutputStream());
 		}
-	
+
 		/*
 		 * Transfers binary data from socket to file
 		 */
 		@Override
 		public void transfer(Socket socket, File file) throws FileNotFoundException, IOException {
-			TransferUtility.transferBinary(socket.getInputStream(), new FileOutputStream(file));		
+			TransferUtility.transferBinary(socket.getInputStream(), new FileOutputStream(file));
 		}
 	}
-	
+
 	/*
 	 * Provide utility methods to transfer text and binary data
 	 */
@@ -105,48 +107,48 @@ public interface TransferStrategy {
 		 * Transfer text data from reader to writer
 		 */
 		public static void transferText(Reader reader, Writer writer) throws IOException {
-			
+
 			// use buffered reader/writer to optimize performance
-	        BufferedReader in = new BufferedReader(reader);
-	        BufferedWriter out = new BufferedWriter(writer);
-	        
+			BufferedReader in = new BufferedReader(reader);
+			BufferedWriter out = new BufferedWriter(writer);
+
 			int c;
 
 			// continue read/write loop until EOF (-1) is reached
-	        while ((c = in.read()) != -1) {
-	            out.write(c);
-	        }
-		
-	        // flush the writer as it is buffered
-	        out.flush();
-	        
-	        // close both reader and writer
-	        in.close();
-	        out.close();
-		
+			while ((c = in.read()) != -1) {
+				out.write(c);
+			}
+
+			// flush the writer as it is buffered
+			out.flush();
+
+			// close both reader and writer
+			in.close();
+			out.close();
+
 		}
-		
+
 		/*
 		 * Transfer binary data from input stream to output stream
 		 */
 		public static void transferBinary(InputStream inStream, OutputStream outStream) throws IOException {
-			
+
 			// use buffered streams to optimize performance
 			BufferedInputStream in = new BufferedInputStream(inStream);
 			BufferedOutputStream out = new BufferedOutputStream(outStream);
 
 			int c;
 			// continue read/write loop until EOF (-1) is reached
-	        while ((c = in.read()) != -1) {
-	            out.write(c);
-	        }
-			
-	        // flush the output stream as it is buffered
-	        out.flush();
-	    	
-	        // close both streams
-	        in.close();
-	        out.close();
+			while ((c = in.read()) != -1) {
+				out.write(c);
+			}
+
+			// flush the output stream as it is buffered
+			out.flush();
+
+			// close both streams
+			in.close();
+			out.close();
 		}
 	}
 }

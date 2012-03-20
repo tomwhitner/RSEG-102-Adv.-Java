@@ -16,11 +16,11 @@ public class FTServer {
 
 	public static final int CMD_PORT = 8189;
 	public static final int DATA_PORT = 8190;
-	
-	private static ServerSocket dataSocket = null;	
+
+	private static ServerSocket dataSocket = null;
 	private static boolean stopped = false;
 	private static Collection<Connection> connections = new ArrayList<Connection>();
-	
+
 	/*
 	 * Main execution loop
 	 */
@@ -29,23 +29,24 @@ public class FTServer {
 		System.out.println("Welcome to FTServer ...");
 
 		ServerSocket cmd = null;
-		
-		try {			
+
+		try {
 
 			// obtain the command port
 			System.out.println("Opening port " + CMD_PORT + " for commands.");
 			cmd = new ServerSocket(CMD_PORT);
 			cmd.setSoTimeout(10000);
-			
+
 			// obtain the data port - used for file transfer
 			System.out.println("Opening port " + DATA_PORT + " for data.");
 			setDataSocket(new ServerSocket(DATA_PORT));
 
-			// until a kill request is received continue waiting for and accepting connections
+			// until a kill request is received continue waiting for and
+			// accepting connections
 			while (!isStopped()) {
-					
+
 				Socket s = null;
-				
+
 				// wait up to 10 seconds for a connection request
 				try {
 					s = cmd.accept();
@@ -54,22 +55,22 @@ public class FTServer {
 					// if the socket timesout, loop to check if stopped
 					continue;
 				}
-				
+
 				// create a new connection (Runnable)
 				Connection c = new Connection(s);
-				
+
 				// add the connection to the collection for tracking
 				addConnection(c);
-				
+
 				// run the connection
 				new Thread(c).start();
 			}
-			
+
 			System.out.println("Main loop exited; no longer accepting connections.");
-			
+
 			if (connectionsOpen()) {
-				System.out.println("Connections are open; waiting to exit.");				
-			
+				System.out.println("Connections are open; waiting to exit.");
+
 				// at this point, the server has been stopped
 				// we must keep running until all connections are closed
 				// but don't accept any new connections
@@ -78,14 +79,14 @@ public class FTServer {
 				}
 			}
 
-			System.out.println("All connections are closed.");				
+			System.out.println("All connections are closed.");
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} finally {
-			
+
 			// close the command ServerSocket
 			if (cmd != null) {
 				try {
@@ -95,10 +96,10 @@ public class FTServer {
 					e.printStackTrace();
 				}
 			}
-			
+
 			// close the data ServerSocket
 			ServerSocket dataSocket = getDataSocket();
-			if (dataSocket !=null) {
+			if (dataSocket != null) {
 				try {
 					dataSocket.close();
 					setDataSocket(null);
@@ -106,11 +107,11 @@ public class FTServer {
 					e.printStackTrace();
 				}
 			}
-			
+
 			System.out.println("Exiting.");
 		}
 	}
-	
+
 	/*
 	 * Gets the current data socket
 	 */
@@ -145,7 +146,7 @@ public class FTServer {
 	private static synchronized void addConnection(Connection connection) {
 		connections.add(connection);
 	}
-	
+
 	/*
 	 * Removes a connection from the collection (after connection terminates)
 	 */
@@ -159,7 +160,7 @@ public class FTServer {
 	private static synchronized boolean connectionsOpen() {
 		return !connections.isEmpty();
 	}
-	
+
 	/*
 	 * Accepts a new connection on the data port
 	 */
@@ -167,10 +168,10 @@ public class FTServer {
 		// accept a connection
 		return getDataSocket().accept();
 	}
-	
-	//////////////////////////////////////////////////////////////////
+
+	// ////////////////////////////////////////////////////////////////
 	// These methods represent the API used by the server connection
-	 
+
 	/*
 	 * Flag the server to stop when remaining connections are closed
 	 */
@@ -178,43 +179,43 @@ public class FTServer {
 		System.out.println("Stop request receieved.");
 		setStopped(true);
 	}
-	
+
 	/*
 	 * The specified connection has ended and can be removed from the collection
 	 */
 	static void connectionEnded(Connection connection) {
 		removeConnection(connection);
 	}
-	
+
 	/*
 	 * Accept a data connection from the client
 	 */
 	static Socket acceptDataConnection(InetAddress expected, String token) throws IOException {
-		
+
 		Socket socket = acceptDataConnection();
 		System.out.println("Data connection requested.");
-		
+
 		// if the connection came from the expected client
 		if (socket.getInetAddress().equals(expected)) {
-			
+
 			// create a scanner for the input stream
 			Scanner scanner = new Scanner(socket.getInputStream());
-			
+
 			// read the first line, we are checking for the expected token
 			// to ensure this is the actual client
 			String line = scanner.nextLine();
-			
+
 			// if the line contains our token, we are good to go
 			if (line.contains(token)) {
 				System.out.println("Data connection accepted.");
 				// return the socket
 				return socket;
-			}	
+			}
 		}
-		
+
 		System.out.println("Data connection rejected.");
-		
-		// either the IP address was incorrect or the line 
+
+		// either the IP address was incorrect or the line
 		// did not include the token
 		// close the socket and return null
 		socket.close();

@@ -39,16 +39,17 @@ public class FTClient {
 	private final InvalidCommand INVALID_COMMAND = new InvalidCommand();
 	private final UnknownCommand UNKNOWN_COMMAND = new UnknownCommand();
 
-	private static final int TIMEOUT_CONNECT = 5000; // five second connect timeout
-	private static final int TIMEOUT_NORMAL = 0;  // no timeout after connect
+	private static final int TIMEOUT_CONNECT = 5000; // five second connect
+														// timeout
+	private static final int TIMEOUT_NORMAL = 0; // no timeout after connect
 
 	private String host = null;
 	private Socket socket = null;
 	private Scanner serverIn = null;
 	private PrintWriter serverOut = null;
-	
+
 	private ConnectionState connectionState;
-	
+
 	private TransferStrategy transferStrategy = TransferStrategy.AsciiTransfer.getInstance();
 
 	/*
@@ -63,12 +64,12 @@ public class FTClient {
 	 */
 	FTClient() {
 		screenIn = new BufferedReader(new InputStreamReader(System.in));
-		screenOut = new PrintWriter(System.out, true /* autoFlush */);		
+		screenOut = new PrintWriter(System.out, true /* autoFlush */);
 	}
-	
+
 	/*
-	 * This is the main method for the client application
-	 * It loops, accepting and processing commands from the user.
+	 * This is the main method for the client application It loops, accepting
+	 * and processing commands from the user.
 	 */
 	void run() {
 
@@ -78,7 +79,7 @@ public class FTClient {
 		setConnectionState(ConnectionState.CLOSED);
 
 		try {
-	
+
 			boolean proceed = true;
 
 			// stop when command indicates loop should exit (Quit)
@@ -88,7 +89,7 @@ public class FTClient {
 
 				// split it into tokens
 				String[] parameters = line.split(" ");
-				
+
 				// first token is the command name
 				String commandName = parameters[0];
 
@@ -97,8 +98,8 @@ public class FTClient {
 
 				// execute the command
 				proceed = cmd.execute(parameters);
-			} 
-			
+			}
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -106,35 +107,35 @@ public class FTClient {
 			close();
 		}
 	}
-	
-	/* 
+
+	/*
 	 * Makes sure all resources are closed
 	 */
 	private void close() {
-		
+
 		// close the server input stream if necessary
 		if (serverIn != null) {
 			serverIn.close();
 			serverIn = null;
 		}
-		
+
 		// close the server output stream if necessary
 		if (serverOut != null) {
 			serverOut.close();
 			serverOut = null;
 		}
-		
+
 		// close the socket if necessary
 		if (socket != null) {
 			try {
 				socket.close();
 			} catch (IOException e) {
-				// Not much can/should be done here.  Exiting anyway.
+				// Not much can/should be done here. Exiting anyway.
 				e.printStackTrace();
 			}
 			socket = null;
 		}
-		
+
 		// make sure connection state is correct
 		setConnectionState(ConnectionState.CLOSED);
 	}
@@ -172,12 +173,12 @@ public class FTClient {
 		// wait for the server response
 		return waitForServer();
 	}
-	
+
 	/*
 	 * Waits for, parses, and echos server responses
 	 */
 	private Result waitForServer() {
-		
+
 		// output each result line from the server
 		String restultLine;
 		do {
@@ -188,16 +189,15 @@ public class FTClient {
 		// parse the result code from the final result line
 		int resultCode = Integer.parseInt(restultLine.substring(0, 3));
 		String message = restultLine.substring(4);
-		
+
 		return new Result(resultCode, message);
 	}
-	
+
 	/*
 	 * Enumeration used to track connection state
 	 */
 	private enum ConnectionState {
-		OPEN,
-		CLOSED 
+		OPEN, CLOSED
 	}
 
 	/*
@@ -211,11 +211,12 @@ public class FTClient {
 	 * Sets the current connection state and updates commands accordingly
 	 */
 	private void setConnectionState(ConnectionState connectionState) {
-		
-		if (this.connectionState == connectionState) return;
-		
+
+		if (this.connectionState == connectionState)
+			return;
+
 		this.connectionState = connectionState;
-		
+
 		switch (this.connectionState) {
 		case OPEN:
 			// configure commands based on open state
@@ -257,24 +258,24 @@ public class FTClient {
 	}
 
 	/*
-	 * Verifies the expected number of parameters are present.
-	 * Reports error to user if not.
-	 * NOTE: Command is first element in parameters[], but is not counted
+	 * Verifies the expected number of parameters are present. Reports error to
+	 * user if not. NOTE: Command is first element in parameters[], but is not
+	 * counted
 	 */
 	private boolean parameterCountIsOK(String[] parameters, int expCount) {
-		
+
 		int paramCount = parameters.length - 1;
-		
+
 		StringBuilder msg = null;
 
 		if (paramCount < expCount) {
 			msg = new StringBuilder("Too few parameters were specified.");
 		}
-		
+
 		if (paramCount > expCount) {
 			msg = new StringBuilder("Too many parameters were specified.");
 		}
-		
+
 		if (msg != null) {
 			msg.append("  ");
 			msg.append(expCount);
@@ -285,9 +286,9 @@ public class FTClient {
 				msg.append(" was");
 			}
 			msg.append(" expected.");
-			
+
 			screenOut.println(msg.toString());
-			
+
 			return false;
 		}
 
@@ -310,7 +311,7 @@ public class FTClient {
 				try {
 					// create socket connection to server
 					socket = new Socket(host, FTServer.CMD_PORT);
-					
+
 					// temporarily reduce timeout during connection
 					socket.setSoTimeout(TIMEOUT_CONNECT);
 
@@ -323,7 +324,7 @@ public class FTClient {
 
 					// echo welcome message from server
 					waitForServer();
-					//screenOut.println(serverIn.nextLine());
+					// screenOut.println(serverIn.nextLine());
 
 					// send user name to server
 					screenOut.print("User: ");
@@ -339,8 +340,9 @@ public class FTClient {
 						String pwd = screenIn.readLine();
 						result = sendCommandToServer(tom.networking.server.Command.PASS, pwd);
 					}
-					
-					// if login was successful (both previous commands executed successfully)
+
+					// if login was successful (both previous commands executed
+					// successfully)
 					if (result.succeeded()) {
 						setConnectionState(ConnectionState.OPEN);
 						screenOut.println("Connected to " + host);
@@ -349,7 +351,7 @@ public class FTClient {
 						setConnectionState(ConnectionState.CLOSED);
 						screenOut.println("Failed to connect to " + host);
 					}
-					
+
 				} catch (UnknownHostException e) {
 					screenOut.println("Unknown host: " + host);
 				} catch (ConnectException ex) {
@@ -360,11 +362,12 @@ public class FTClient {
 				} finally {
 					// if something went wrong, the connection will not be open
 					if (getConnectionState() == ConnectionState.CLOSED) {
-						// we need to call close to make sure resources are released.
+						// we need to call close to make sure resources are
+						// released.
 						close();
 					}
 				}
-			} 
+			}
 			return true;
 		}
 	}
@@ -393,7 +396,7 @@ public class FTClient {
 						screenOut.println("Connnection closed.");
 					} else {
 						screenOut.println("Failed to close connection.");
-					}			
+					}
 				} else {
 					// socket is null or closed.
 					// call close() to make sure streams are closed
@@ -413,7 +416,7 @@ public class FTClient {
 		public boolean execute(String[] parameters) {
 
 			if (parameterCountIsOK(parameters, 0)) {
-				
+
 				// get the close command
 				Command cmd = getCommand(Command.CLOSE);
 
@@ -433,28 +436,29 @@ public class FTClient {
 			}
 		}
 	}
-	
+
 	/*
-	 * This abstract command implements the algorithm for both
-	 * the GET and PUT commands that transfer files
+	 * This abstract command implements the algorithm for both the GET and PUT
+	 * commands that transfer files
 	 */
 	private abstract class TransferCommand implements Command {
-		
+
 		private final String serverCommand;
 		private final String successMessage;
 		private final String failureMessage;
 		private final boolean fileRequired;
-		
+
 		/*
 		 * constructor
 		 */
-		protected TransferCommand(String serverCommand, String successMessage, String failureMessage, boolean fileRequired) {
+		protected TransferCommand(String serverCommand, String successMessage, String failureMessage,
+				boolean fileRequired) {
 			this.serverCommand = serverCommand;
 			this.successMessage = successMessage;
 			this.failureMessage = failureMessage;
 			this.fileRequired = fileRequired;
 		}
-	
+
 		@Override
 		public boolean execute(String[] parameters) {
 
@@ -463,45 +467,45 @@ public class FTClient {
 				// construct the file object to store to locally
 				String fileName = parameters[1];
 				File file = new File(fileDir, fileName);
-				
+
 				if (fileRequired && !file.exists()) {
 					screenOut.println("File does not exist.");
 					return true;
 				}
 
 				Socket dataSocket = null;
-				
+
 				try {
-					
+
 					// ask server to accept second connection for file transfer
 					Result result = sendCommandToServer(tom.networking.server.Command.PASV);
-					
+
 					// if server agrees
 					if (result.succeeded()) {
-						
+
 						// open the socket
 						dataSocket = new Socket(host, FTServer.DATA_PORT);
 						dataSocket.setSoTimeout(10000);
-						
+
 						// send the token to verify connection
 						PrintWriter pw = new PrintWriter(dataSocket.getOutputStream());
 						pw.println(result.getMessage());
 						pw.flush();
-						
+
 						// ask server to send file
 						result = sendCommandToServer(serverCommand, fileName);
-						
+
 						if (result.succeeded()) {
-							
+
 							// perform the transfer
 							doTransfer(getTransferStrategy(), file, dataSocket);
-	
+
 							// wait for file transfer to complete
 							result = waitForServer();
-						
+
 							screenOut.println(successMessage);
 						} else {
-							screenOut.println(failureMessage);							
+							screenOut.println(failureMessage);
 						}
 					}
 
@@ -521,19 +525,20 @@ public class FTClient {
 						e.printStackTrace();
 					}
 				}
-			} 
+			}
 			return true;
 		}
-		
+
 		// performs file transfer
-		protected abstract void doTransfer(TransferStrategy transferStrategy, File file, Socket socket) throws FileNotFoundException, IOException;
+		protected abstract void doTransfer(TransferStrategy transferStrategy, File file, Socket socket)
+				throws FileNotFoundException, IOException;
 	}
-		
+
 	/*
 	 * This command retrieves a file from the server using the current mode/type
 	 */
 	private class GetCommand extends TransferCommand {
-		
+
 		/*
 		 * constructor
 		 */
@@ -570,7 +575,8 @@ public class FTClient {
 	}
 
 	/*
-	 * This command sets the current mode/type by setting the current transfer strategy
+	 * This command sets the current mode/type by setting the current transfer
+	 * strategy
 	 */
 	private class ModeCommand implements Command {
 
@@ -638,18 +644,18 @@ public class FTClient {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			
+
 			String command = parameters[0];
-			
+
 			StringBuilder sb = new StringBuilder(75);
 			sb.append("The '");
 			sb.append(command.toUpperCase());
 			sb.append("' command is not available when the connection is ");
 			sb.append(getConnectionState());
 			sb.append(".");
-			
+
 			screenOut.println(sb.toString());
-					
+
 			return true;
 		}
 	}
@@ -661,7 +667,7 @@ public class FTClient {
 
 		@Override
 		public boolean execute(String[] parameters) {
-			
+
 			screenOut.println("Supported commands are:");
 			screenOut.println("");
 			screenOut.println(Command.OPEN + " hostname - open a connection to the specified host");
@@ -676,7 +682,7 @@ public class FTClient {
 			return true;
 		}
 	}
-		
+
 	/*
 	 * This command is executed whenever the user enters any command which is
 	 * not recognized.
