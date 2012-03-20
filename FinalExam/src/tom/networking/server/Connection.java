@@ -115,13 +115,11 @@ class Connection implements Runnable {
 		
 		// close the command socket if necessary
 		if (commandSocket != null) {
-			if (!commandSocket.isClosed()) {
-				try {
-					commandSocket.close();
-				} catch (IOException e) {
-					// Not much can/should be done here.  Exiting anyway.
-					e.printStackTrace();
-				}
+			try {
+				commandSocket.close();
+			} catch (IOException e) {
+				// Not much can/should be done here.  Exiting anyway.
+				e.printStackTrace();
 			}
 		}
 		
