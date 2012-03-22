@@ -179,18 +179,17 @@ public class FTClient {
 	 */
 	private Result waitForServer() {
 
-		// output each result line from the server
-		String restultLine;
+		Result result = null;
+		
 		do {
-			restultLine = serverIn.nextLine();
+			String restultLine = serverIn.nextLine();
+			result = new Result(restultLine);
+			// output each result line from the server
 			screenOut.println(restultLine);
-		} while (restultLine.charAt(3) != ' ');
+		} while (!result.getLast());
 
-		// parse the result code from the final result line
-		int resultCode = Integer.parseInt(restultLine.substring(0, 3));
-		String message = restultLine.substring(4);
-
-		return new Result(resultCode, message);
+		// return the result
+		return result;
 	}
 
 	/*

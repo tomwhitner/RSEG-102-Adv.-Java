@@ -140,6 +140,7 @@ class Connection implements Runnable {
 	 */
 	private void outputToClient(int code, String message, boolean last) {
 
+		/*
 		// sanity check that no invalid codes are sent to client
 		assert (code >= 100) && (code <= 599) : "Invalid code";
 
@@ -149,8 +150,11 @@ class Connection implements Runnable {
 		sb.append(last ? " " : "-");
 		sb.append(message);
 
+*/
+		Result result = new Result(code, message, last);
+		
 		// send the message to the client
-		out.println(sb.toString());
+		out.println(result);
 	}
 
 	/*
