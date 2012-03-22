@@ -138,20 +138,9 @@ class Connection implements Runnable {
 	 * Send well-formatted message to client This includes codes that enable the
 	 * client to determine success or failure
 	 */
-	private void outputToClient(int code, String message, boolean last) {
+	private void outputToClient(int resultCode, String message, boolean last) {
 
-		/*
-		// sanity check that no invalid codes are sent to client
-		assert (code >= 100) && (code <= 599) : "Invalid code";
-
-		// construct the message
-		StringBuilder sb = new StringBuilder(message.length() + 1);
-		sb.append(code);
-		sb.append(last ? " " : "-");
-		sb.append(message);
-
-*/
-		Result result = new Result(code, message, last);
+		Result result = new Result(resultCode, message, last);
 		
 		// send the message to the client
 		out.println(result);

@@ -170,7 +170,7 @@ public class FTClient {
 		// send the command line to the server
 		serverOut.println(cmdLine);
 
-		// wait for the server response
+		// wait for and return the server response
 		return waitForServer();
 	}
 
@@ -182,10 +182,12 @@ public class FTClient {
 		Result result = null;
 		
 		do {
+			// read the result string form the server
 			String restultLine = serverIn.nextLine();
-			result = new Result(restultLine);
-			// output each result line from the server
+			// output each result line 
 			screenOut.println(restultLine);
+			// construct a new result object
+			result = new Result(restultLine);
 		} while (!result.getLast());
 
 		// return the result
