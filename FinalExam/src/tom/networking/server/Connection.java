@@ -32,10 +32,15 @@ class Connection implements Runnable {
 
 	private TransferStrategy transferStrategy = TransferStrategy.AsciiTransfer.getInstance();
 
+	/*
+	 * Constructor
+	 */
 	Connection(Socket socket) {
 
+		// store the socket
 		this.commandSocket = socket;
 
+		// create the server command objects
 		commands.put(Command.PASV, new PasvCommand());
 		commands.put(Command.RETR, new RetrCommand());
 		commands.put(Command.STOR, new StorCommand());
@@ -44,7 +49,6 @@ class Connection implements Runnable {
 		commands.put(Command.KILL, new KillCommand());
 		commands.put(Command.USER, new UserCommand());
 		commands.put(Command.PASS, new PassCommand());
-
 	}
 
 	/*
@@ -55,7 +59,7 @@ class Connection implements Runnable {
 	public void run() {
 
 		try {
-
+			// create and store in.out streams
 			in = new BufferedReader(new InputStreamReader(commandSocket.getInputStream()));
 			out = new PrintWriter(commandSocket.getOutputStream(), true /* autoFlush */);
 
@@ -135,7 +139,7 @@ class Connection implements Runnable {
 	}
 
 	/*
-	 * Send well-formatted message to client This includes codes that enable the
+	 * Send well-formatted message to client This includes codes that enables the
 	 * client to determine success or failure
 	 */
 	private void outputToClient(int resultCode, String message, boolean last) {
@@ -303,7 +307,6 @@ class Connection implements Runnable {
 			
 		}
 
-
 		@Override
 		public boolean doExecute(String[] parameters) {
 
@@ -469,6 +472,7 @@ class Connection implements Runnable {
 					String fileName = parameters[1];
 					File file = new File(fileDir, fileName);
 
+					// verify file exists if necessary
 					if (fileRequired && !file.exists()) {
 						outputToClient(Result.FAILURE, "File does not exist.", true);
 						return true;

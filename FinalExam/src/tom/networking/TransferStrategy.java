@@ -40,11 +40,20 @@ public interface TransferStrategy {
 	 */
 	public class AsciiTransfer implements TransferStrategy {
 
+		/*
+		 * Constructor.  Private as this is a singleton
+		 */
 		private AsciiTransfer() {
 		}
 
+		/*
+		 * The singleton instance
+		 */
 		private static AsciiTransfer theInstance = new AsciiTransfer();
 
+		/*
+		 * Gets the singleton instance
+		 */
 		public static AsciiTransfer getInstance() {
 			return theInstance;
 		}
@@ -72,11 +81,20 @@ public interface TransferStrategy {
 	 */
 	public class BinaryTransfer implements TransferStrategy {
 
+		/*
+		 * Constructor.  Private as this is a singleton
+		 */
 		private BinaryTransfer() {
 		}
 
+		/*
+		 * The singleton instance
+		 */
 		private static BinaryTransfer theInstance = new BinaryTransfer();
 
+		/*
+		 * Gets the singleton instance
+		 */
 		public static BinaryTransfer getInstance() {
 			return theInstance;
 		}
@@ -138,6 +156,7 @@ public interface TransferStrategy {
 			BufferedOutputStream out = new BufferedOutputStream(outStream);
 
 			int c;
+			
 			// continue read/write loop until EOF (-1) is reached
 			while ((c = in.read()) != -1) {
 				out.write(c);

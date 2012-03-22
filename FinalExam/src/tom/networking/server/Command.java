@@ -12,7 +12,21 @@ public abstract class Command extends tom.networking.Command {
 	@Override
 	public boolean execute (String[] parameters) {
 		
+		// display the command to the console
+		displayCommand(parameters);
+		
+		// execute the command
+		return super.execute(parameters);
+	}
+	
+	/*
+	 * Formats and displays the specified command to the console.
+	 */
+	private void displayCommand(String[] parameters) {
+		
 		StringBuilder sb = new StringBuilder(40);
+		
+		sb.append("Processing: ");
 		
 		sb.append(parameters[0]).append(" (");
 		
@@ -23,9 +37,7 @@ public abstract class Command extends tom.networking.Command {
 		
 		sb.append(")");
 		
-		System.out.println("Processing: " + sb.toString());
-
-		return super.execute(parameters);
+		System.out.println(sb.toString());
 	}
 
 	/*

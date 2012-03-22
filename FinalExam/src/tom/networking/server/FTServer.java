@@ -52,7 +52,7 @@ public class FTServer {
 					s = cmd.accept();
 					System.out.println("Connection accepted.");
 				} catch (SocketTimeoutException ex) {
-					// if the socket timesout, loop to check if stopped
+					// if the socket times out, loop to check if stopped
 					continue;
 				}
 

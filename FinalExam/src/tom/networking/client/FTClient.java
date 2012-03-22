@@ -39,8 +39,7 @@ public class FTClient {
 	private final InvalidCommand INVALID_COMMAND = new InvalidCommand();
 	private final UnknownCommand UNKNOWN_COMMAND = new UnknownCommand();
 
-	private static final int TIMEOUT_CONNECT = 5000; // five second connect
-														// timeout
+	private static final int TIMEOUT_CONNECT = 5000; // five second connect timeout						
 	private static final int TIMEOUT_NORMAL = 0; // no timeout after connect
 
 	private String host = null;
@@ -56,6 +55,7 @@ public class FTClient {
 	 * Program main method.
 	 */
 	public static void main(String[] args) {
+		// instantiate a new instance and run it.
 		new FTClient().run();
 	}
 
@@ -213,9 +213,11 @@ public class FTClient {
 	 */
 	private void setConnectionState(ConnectionState connectionState) {
 
+		// if the state hasn't changed, just exit
 		if (this.connectionState == connectionState)
 			return;
 
+		// store the new state
 		this.connectionState = connectionState;
 
 		switch (this.connectionState) {

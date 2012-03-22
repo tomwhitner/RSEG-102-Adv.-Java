@@ -41,7 +41,6 @@ public class Result {
 		this.resultCode = Integer.parseInt(resultString.substring(0, 3));
 		this.message = resultString.substring(4);
 		this.last = (resultString.charAt(3) == LAST_INDICATOR);
-
 	}
 
 	/*

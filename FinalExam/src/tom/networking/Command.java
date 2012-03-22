@@ -11,8 +11,8 @@ public abstract class Command {
 	 */
 	public boolean execute (String[] parameters) {
 		
+		// call the concrete implementation within the subclass
 		return doExecute(parameters);
-		
 	}
 	
 	/*
@@ -20,5 +20,4 @@ public abstract class Command {
 	 * Return true if process should continue; false if process should terminate.
 	 */
 	protected abstract boolean doExecute(String[] parameters);
-
 }

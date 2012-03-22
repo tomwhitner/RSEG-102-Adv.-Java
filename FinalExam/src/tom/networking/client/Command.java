@@ -37,5 +37,4 @@ public abstract class Command extends tom.networking.Command {
 	 * Provides the user with basic help
 	 */
 	static final String HELP = "HELP";
-
 }
