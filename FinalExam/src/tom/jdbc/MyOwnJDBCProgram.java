@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
@@ -22,43 +23,42 @@ public class MyOwnJDBCProgram {
 		try {
 			// create the connection
 			conn = getConnection();
+			try {
 
-			// drop the tables if they happen to exist from a prior execution
-			dropEmployeeTable(conn);
-			dropDeptTable(conn);
-
-			// create the tables
-			createDeptTable(conn);
-			createEmployeeTable(conn);
-
-			// insert the department data
-			insertDept(conn, 1, "Engineering");
-			insertDept(conn, 2, "Sales Marketing");
-			insertDept(conn, 3, "Human Resources");
-
-			// insert the employee data
-			insertEmployee(conn, 1, "Raghu Verabelli", "Burlington", 1);
-			insertEmployee(conn, 2, "Joe Chase", "Santa Clara", 3);
-			insertEmployee(conn, 3, "David Korbel", "Chicago", 2);
-			insertEmployee(conn, 4, "John Maina", "New York", 2);
-			insertEmployee(conn, 5, "Ivan Krylov ", "St. Petersburg", 1);
-
-			// list the data in both tables to output
-			listDept(conn);
-			listEmployee(conn);
+				// drop the tables if they happen to exist from a prior execution
+				dropEmployeeTable(conn);
+				dropDeptTable(conn);
+	
+				// create the tables
+				createDeptTable(conn);
+				createEmployeeTable(conn);
+	
+				// insert the department data
+				insertDept(conn, 1, "Engineering");
+				insertDept(conn, 2, "Sales Marketing");
+				insertDept(conn, 3, "Human Resources");
+	
+				// insert the employee data
+				insertEmployee(conn, 1, "Raghu Verabelli", "Burlington", 1);
+				insertEmployee(conn, 2, "Joe Chase", "Santa Clara", 3);
+				insertEmployee(conn, 3, "David Korbel", "Chicago", 2);
+				insertEmployee(conn, 4, "John Maina", "New York", 2);
+				insertEmployee(conn, 5, "Ivan Krylov ", "St. Petersburg", 1);
+	
+				// list the data in both tables to output
+				listDept(conn);
+				listEmployee(conn);
+				
+			} finally {
+				// close the connection
+				conn.close();
+			}
 
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				// close the connection
-				conn.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
+		} 
 	}
 
 	// DEPT SQL Statements
@@ -140,7 +140,8 @@ public class MyOwnJDBCProgram {
 	 */
 	private static void listDept(Connection conn) throws SQLException {
 		ResultSet rs = executeQuery(conn, DEPT_SELECT_SQL);
-		displayResultSet(rs, "DEPT_ID", "DEPT_NAME");
+		displayResultSet(rs);
+		// close the result set (also closes statement)
 		rs.close();
 	}
 
@@ -171,7 +172,8 @@ public class MyOwnJDBCProgram {
 	 */
 	private static void listEmployee(Connection conn) throws SQLException {
 		ResultSet rs = executeQuery(conn, EMPLOYEE_SELECT_SQL);
-		displayResultSet(rs, "EMP_ID", "NAME", "LOCATION", "DEPT");
+		displayResultSet(rs);
+		// close the result set (also closes statement)
 		rs.close();
 	}
 
@@ -185,12 +187,17 @@ public class MyOwnJDBCProgram {
 		// create the statement
 		Statement stat = conn.createStatement();
 		// execute the statement
-		return stat.executeUpdate(sql);
+		int count = stat.executeUpdate(sql);
+		// close the statement
+		stat.close();
+		// return the count of affected rows
+		return count;
 	}
 
 	/* 
 	 * Executes and query that returns a ResultSet and display ResultSet (including column names) to output
 	 * Also logs the SQL statement to output.
+	 * The caller is responsible for closing the result set.  This will also close the statement.
 	 */
 	private static ResultSet executeQuery(Connection conn, String sql) throws SQLException {
 		// log the statement
@@ -198,7 +205,9 @@ public class MyOwnJDBCProgram {
 		// create the statement
 		Statement stat = conn.createStatement();
 		// execute the query and return the result set
-		return stat.executeQuery(sql);
+		ResultSet resultSet = stat.executeQuery(sql);
+		// return the result set.
+		return resultSet;
 	}
 		
 	/*
@@ -209,8 +218,18 @@ public class MyOwnJDBCProgram {
 	/*
 	 * Formats and displays the result set to the screen.
 	 */
-	private static void displayResultSet(ResultSet result, String... columns) throws SQLException {
+	private static void displayResultSet(ResultSet result) throws SQLException {
 
+		// retrieve result set meta data
+		ResultSetMetaData metaData = result.getMetaData();
+		
+		// create an array of column names
+		int colCount = metaData.getColumnCount();
+		String[] columns = new String[colCount];
+		for (int c=1; c<=colCount; c++) {
+			columns[c-1] = metaData.getColumnLabel(c);
+		}
+		
 		// initialize string builders for header and separator rows
 		StringBuilder header = new StringBuilder(100);
 		StringBuilder separator = new StringBuilder(100);
