@@ -179,13 +179,13 @@ public class MyOwnJDBCProgram {
 	 * Execute any SQL statement that does not return a ResultSet.
 	 * Also logs the SQL statement to output.
 	 */
-	private static boolean executeSql(Connection conn, String sql) throws SQLException {
+	private static int executeSql(Connection conn, String sql) throws SQLException {
 		// log the statement
 		System.out.println(String.format("Executing: '%s'", sql));
 		// create the statement
 		Statement stat = conn.createStatement();
 		// execute the statement
-		return stat.execute(sql);
+		return stat.executeUpdate(sql);
 	}
 
 	/* 
