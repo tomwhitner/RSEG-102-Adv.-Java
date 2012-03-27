@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -50,6 +51,8 @@ public class MyOwnJDBCProgram {
 				listEmployee(conn);
 				
 			} finally {
+				// close and open prepared statements
+				close();
 				// close the connection
 				conn.close();
 			}
@@ -67,7 +70,7 @@ public class MyOwnJDBCProgram {
 	private static final String DEPT_CREATE_SQL = "CREATE TABLE DEPT (" + "DEPT_ID INTEGER NOT NULL PRIMARY KEY, "
 			+ "DEPT_NAME VARCHAR(40));";
 
-	private static final String DEPT_INSERT_SQL = "INSERT INTO DEPT VALUES (%d,'%s');";
+	private static final String DEPT_INSERT_SQL = "INSERT INTO DEPT VALUES (?, ?);";
 
 	private static final String DEPT_SELECT_SQL = "SELECT * FROM DEPT;";
 
@@ -78,9 +81,12 @@ public class MyOwnJDBCProgram {
 			+ "EMP_ID INTEGER NOT NULL PRIMARY KEY, " + "NAME VARCHAR(40), " + "LOCATION VARCHAR(40), "
 			+ "DEPT INTEGER, " + "CONSTRAINT FK_DEPT_ID FOREIGN KEY (DEPT) REFERENCES DEPT(DEPT_ID));";
 
-	private static final String EMPLOYEE_INSERT_SQL = "INSERT INTO EMPLOYEE VALUES (%d,'%s', '%s', %d);";
+	private static final String EMPLOYEE_INSERT_SQL = "INSERT INTO EMPLOYEE VALUES (?, ?, ?, ?);";
 
 	private static final String EMPLOYEE_SELECT_SQL = "SELECT * FROM EMPLOYEE;";
+	
+	private static PreparedStatement deptInsertStatement;
+	private static PreparedStatement employeeInsertStatement;
 
 	/*
 	 * Retrieves database connect properties from the db.properties file,
@@ -113,6 +119,17 @@ public class MyOwnJDBCProgram {
 		// create and return a new connection
 		return DriverManager.getConnection(url, username, password);
 	}
+	
+	private static void close() throws SQLException {
+		if (deptInsertStatement != null) {
+			deptInsertStatement.close();
+			deptInsertStatement = null;
+		}
+		if (employeeInsertStatement != null) {
+			employeeInsertStatement.close();
+			employeeInsertStatement = null;
+		}
+	}
 
 	/*
 	 * Drops the DEPT table if it exists; otherwise, does nothing.
@@ -129,10 +146,23 @@ public class MyOwnJDBCProgram {
 	}
 
 	/*
-	 * Insert a DEPT record into the database
+	 * Insert a DEPT record into the database; uses a prepare statement
 	 */
 	private static void insertDept(Connection conn, int id, String name) throws SQLException {
-		executeSql(conn, String.format(DEPT_INSERT_SQL, id, name));
+		// Create the prepared statement if necessary
+		if (deptInsertStatement == null) {
+			deptInsertStatement = conn.prepareStatement(DEPT_INSERT_SQL);
+		}
+		
+		// log the SQL being executed
+		System.out.println(String.format("Executing: '%s'", DEPT_INSERT_SQL));
+
+		// bind the parameters
+		deptInsertStatement.setInt(1, id);
+		deptInsertStatement.setString(2, name);		
+		
+		// execute the statement
+		deptInsertStatement.executeUpdate();
 	}
 
 	/*
@@ -160,11 +190,26 @@ public class MyOwnJDBCProgram {
 	}
 
 	/*
-	 * Insert a EMPLOYEE record into the database
+	 * Insert a EMPLOYEE record into the database; uses a prepare statement
 	 */
 	private static void insertEmployee(Connection conn, int id, String name, String location, int deptId)
 			throws SQLException {
-		executeSql(conn, String.format(EMPLOYEE_INSERT_SQL, id, name, location, deptId));
+		// Create the prepared statement if necessary
+		if (employeeInsertStatement == null) {
+			employeeInsertStatement = conn.prepareStatement(EMPLOYEE_INSERT_SQL);
+		}
+		
+		// log the SQL being executed
+		System.out.println(String.format("Executing: '%s'", EMPLOYEE_INSERT_SQL));
+		
+		// bind the parameters
+		employeeInsertStatement.setInt(1, id);
+		employeeInsertStatement.setString(2, name);
+		employeeInsertStatement.setString(3, location);
+		employeeInsertStatement.setInt(4, deptId);
+		
+		// execute the statement
+		employeeInsertStatement.executeUpdate();
 	}
 
 	/*
